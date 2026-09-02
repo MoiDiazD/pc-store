@@ -10,6 +10,7 @@ import {
   timestamp
 } from 'drizzle-orm/pg-core';
 import { brands } from './brands.schema';
+import { timestamps } from './common.schema';
 
 export const products = pgTable(
   'products',
@@ -33,9 +34,7 @@ export const products = pgTable(
       .notNull()
       .references(() => brands.id),
     
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    ...timestamps
   },
   (table) => [
     check('products_price_non_negative', sql`${table.price} >= 0`),

@@ -1,51 +1,60 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { DATABASE } from '../database/database.provider';
-import type { Database } from '../database/database.provider';
-import { products } from '../database/schema';
-import { eq } from 'drizzle-orm';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
+import { ProductsRepository } from './products.repository';
 
 @Injectable()
 export class ProductsService {
   constructor(
-    @Inject(DATABASE)
-    private readonly db: Database,
+    private readonly productsRepository: ProductsRepository,
   ) {}
 
-  findById(id: number) {
-    return this.db.select()
-        .from(products)
-          .where(eq(products.id, id))
-    .execute();
-  }
-  
   findAll() {
-    return this.db.select().from(products);
+    return this.productsRepository.findAll();
+  }
+
+  async findById(id: number) {
+    const product = await this.productsRepository.findById(id);
+
+    if (!product) {
+      throw new NotFoundException(
+        `Product with id ${id} not found`,
+      );
+    }
+
+    return product;
   }
 
   create(product: CreateProductDto) {
-    return this.db
-      .insert(products)
-        .values(product)
-          .returning();
+    return this.productsRepository.create(product);
   }
-  update(id: number, product: UpdateProductDto) {
-    return this.db
-      .update(products)
-        .set({
-          ...product,
-          updatedAt: new Date(),
-        })
-          .where(eq(products.id, id))
-    .returning();
+
+  async update(id: number, product: UpdateProductDto) {
+    const updatedProduct = await this.productsRepository.update(
+      id,
+      product,
+    );
+
+    if (!updatedProduct) {
+      throw new NotFoundException(
+        `Product with id ${id} not found`,
+      );
+    }
+
+    return updatedProduct;
   }
-  
-  delete(id: number) {
-    return this.db
-      .delete(products)
-        .where(eq(products.id, id))
-    .returning();
+
+  async delete(id: number) {
+    const deletedProduct = await this.productsRepository.softDelete(id);
+
+    if (!deletedProduct) {
+      throw new NotFoundException(
+        `Product with id ${id} not found`,
+      );
+    }
+
+    return deletedProduct;
   }
 }
