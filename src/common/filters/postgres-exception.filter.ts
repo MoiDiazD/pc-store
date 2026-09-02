@@ -24,13 +24,6 @@ export class PostgresExceptionFilter implements ExceptionFilter {
   catch(exception: Error & { code?: string }, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<FastifyReply>();
 
-    console.error('POSTGRES FILTER EXCEPTION:', {
-      name: exception.name,
-      message: exception.message,
-      stack: exception.stack,
-      cause: exception.cause,
-    });
-
     if (exception instanceof HttpException) {
       return response
         .status(exception.getStatus())

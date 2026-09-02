@@ -84,8 +84,6 @@ export class ProductsRepository extends BaseRepository<Product> {
     )
     .returning();
 
-    console.log('SOFT DELETE RESULT:', product);
-    
   return product;
 }
 

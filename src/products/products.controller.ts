@@ -33,10 +33,6 @@ export class ProductsController {
 
     @Delete(':id')
     async delete(@Param('id') id: string) {
-        const result = await this.productsService.delete(Number(id));
-
-        console.log('CONTROLLER RESULT:', result);
-
-        return result;
+        return await this.productsService.delete(Number(id));
     }
 }
