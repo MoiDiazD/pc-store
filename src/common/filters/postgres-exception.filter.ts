@@ -2,6 +2,7 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
+  HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
@@ -23,10 +24,23 @@ export class PostgresExceptionFilter implements ExceptionFilter {
   catch(exception: Error & { code?: string }, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<FastifyReply>();
 
-    const cause = exception.cause;
-    
-    const code = isPostgreSQLError(cause) ? cause.code : undefined;
-    
+    console.error('POSTGRES FILTER EXCEPTION:', {
+      name: exception.name,
+      message: exception.message,
+      stack: exception.stack,
+      cause: exception.cause,
+    });
+
+    if (exception instanceof HttpException) {
+      return response
+        .status(exception.getStatus())
+        .send(exception.getResponse());
+    }
+
+    const code = isPostgreSQLError(exception.cause)
+      ? exception.cause.code
+      : undefined;
+
     switch (code) {
       case '23503':
         return response.status(HttpStatus.NOT_FOUND).send({
@@ -49,7 +63,6 @@ export class PostgresExceptionFilter implements ExceptionFilter {
         });
 
       default:
-        
         return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send({
           message: 'Internal server error.',
         });
