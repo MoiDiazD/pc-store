@@ -22,6 +22,13 @@
       "when": 1788345222177,
       "tag": "0002_sour_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788435172395,
+      "tag": "0003_rich_cyclops",
+      "breakpoints": true
     }
   ]
 }

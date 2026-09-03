@@ -6,6 +6,7 @@ import {
   varchar,
   timestamp
 } from 'drizzle-orm/pg-core';
+import { timestamps } from './common.schema';
 
 export const userRoleEnum = pgEnum('user_role', [
   'customer',
@@ -21,11 +22,9 @@ export const users = pgTable('users', {
 
   email: varchar('email', { length: 200 }).notNull().unique(),
 
-  password: text('password').notNull(),
+  passwordHash: text('password_hash').notNull(),
 
   role: userRoleEnum('role').notNull().default('customer'),
 
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  ...timestamps
 });

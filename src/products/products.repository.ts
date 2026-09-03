@@ -87,12 +87,14 @@ export class ProductsRepository extends BaseRepository<Product> {
   return product;
 }
 
-  async restore(id: number): Promise<void> {
-    await this.db
+  async restore(id: number): Promise<Product | undefined> {
+    const [product] = await this.db
       .update(products)
       .set({
         deletedAt: null,
       })
-      .where(eq(products.id, id));
+      .where(eq(products.id, id))
+      .returning();
+    return product;
   }
 }
