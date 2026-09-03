@@ -29,6 +29,13 @@
       "when": 1788435172395,
       "tag": "0003_rich_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788455687736,
+      "tag": "0004_worthless_chamber",
+      "breakpoints": true
     }
   ]
 }

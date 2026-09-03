@@ -4,6 +4,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { PostgresExceptionFilter } from './common/filters/postgres-exception.filter';
+import cookie from '@fastify/cookie';
 
 
 async function bootstrap() {
@@ -11,6 +12,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
+  await app.register(cookie);
   app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,

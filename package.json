@@ -23,6 +23,7 @@
     "db:check": "drizzle-kit check"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-fastify": "^11.2.1",
