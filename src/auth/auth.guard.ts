@@ -10,17 +10,33 @@ import type { FastifyRequest } from 'fastify';
 import { UsersRepository } from '../users/users.repository';
 import { SESSION_COOKIE_NAME } from './auth.constants';
 import { SessionsRepository } from './sessions.repository';
+import { IS_PUBLIC_KEY } from './public.decorator';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly sessionsRepository: SessionsRepository,
     private readonly usersRepository: UsersRepository,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(
     context: ExecutionContext,
   ): Promise<boolean> {
+    const isPublic =
+      this.reflector.getAllAndOverride<boolean>(
+        IS_PUBLIC_KEY,
+        [
+          context.getHandler(),
+          context.getClass(),
+        ],
+      );
+
+    if (isPublic) {
+      return true;
+    }
+
     const request =
       context.switchToHttp().getRequest<FastifyRequest>();
 

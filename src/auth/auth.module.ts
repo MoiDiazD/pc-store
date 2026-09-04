@@ -7,17 +7,17 @@ import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { SessionsRepository } from './sessions.repository';
+import { RoleGuard } from './roles.guard';
+import { AuthAccessModule } from './auth-access-module';
 
 @Module({
-  imports: [
-    DatabaseModule,
+   imports: [
     UsersModule,
+    AuthAccessModule,
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
-    SessionsRepository,
-    AuthGuard,
   ],
 })
 export class AuthModule {}

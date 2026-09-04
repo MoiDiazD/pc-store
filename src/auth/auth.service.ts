@@ -101,4 +101,12 @@ export class AuthService {
       },
     };
   }
+
+  async logout(sessionToken: string): Promise<void> {
+    const sessionTokenHash = createHash('sha256')
+      .update(sessionToken)
+      .digest('hex');
+
+    await this.sessionsRepository.revoke(sessionTokenHash);
+  }
 }

@@ -43,8 +43,8 @@ export class SessionsRepository {
     return session;
   }
 
-  async revoke(tokenHash: string): Promise<void> {
-    await this.db
+  async revoke(tokenHash: string): Promise<Session | undefined> {
+    const [session] = await this.db
       .update(sessions)
       .set({
         revokedAt: new Date(),
@@ -54,7 +54,9 @@ export class SessionsRepository {
           eq(sessions.id, tokenHash),
           isNull(sessions.revokedAt),
         ),
-      );
+      )
+      .returning();
+    return session;
   }
 
   async revokeAllForUser(userId: number): Promise<void> {

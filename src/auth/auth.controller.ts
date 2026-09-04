@@ -9,14 +9,17 @@ import {
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
+import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import {
   SESSION_COOKIE_NAME,
   SESSION_DURATION_MS,
 } from './auth.constants';
-import { AuthGuard } from './auth.guard';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { Roles } from './roles.decorator';
+import { RoleGuard } from './roles.guard';
+import { Public } from './public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -24,11 +27,13 @@ export class AuthController {
     private readonly authService: AuthService,
   ) {}
 
+  @Public()
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  @Public()
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -54,8 +59,24 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('me')
-  me(@Req() request: FastifyRequest) {
-    return request.user;
+  @Post('logout')
+  async logout(
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true })
+    response: FastifyReply,
+  ) {
+    const sessionToken =
+      request.cookies[SESSION_COOKIE_NAME];
+
+    if (sessionToken) {
+      await this.authService.logout(sessionToken);
+    }
+
+    response.clearCookie(
+      SESSION_COOKIE_NAME,
+      {
+        path: '/',
+      },
+    );
   }
 }
