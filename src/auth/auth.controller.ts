@@ -2,6 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -17,9 +20,8 @@ import {
 } from './auth.constants';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { Roles } from './roles.decorator';
-import { RoleGuard } from './roles.guard';
 import { Public } from './public.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -77,6 +79,24 @@ export class AuthController {
       {
         path: '/',
       },
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('me')
+  async me(@Req() request: FastifyRequest) {
+    return request.user;
+  }
+
+  @Patch('change-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @Req() request: FastifyRequest,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(
+      request.user!.id,
+      dto,
     );
   }
 }

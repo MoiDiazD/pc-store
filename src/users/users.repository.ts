@@ -7,6 +7,7 @@ import type { Database } from '../database/database.provider';
 import { users } from '../database/schema';
 
 import { BaseRepository } from '../database/repositories/base.repository';
+import { UserRole } from './user-role.type';
 
 type User = typeof users.$inferSelect;
 
@@ -91,4 +92,67 @@ export class UsersRepository extends BaseRepository<User> {
 
     return user;
   }
+
+  async update(
+    id: number,
+    data: Partial<typeof users.$inferInsert>,
+  ): Promise<User | undefined> {
+    const [user] = await this.db
+      .update(users)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(users.id, id),
+          isNull(users.deletedAt),
+        ),
+      )
+      .returning();
+
+    return user;
+  }
+
+  async updatePassword(
+    id: number,
+    passwordHash: string,
+  ): Promise<User | undefined> {
+    const [user] = await this.db
+      .update(users)
+      .set({
+        passwordHash,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(users.id, id),
+          isNull(users.deletedAt),
+        ),
+      )
+      .returning();
+
+    return user;
+  }
+
+  async updateRole(
+      id: number,
+      role: UserRole,
+    ): Promise<User | undefined> {
+      const [user] = await this.db
+        .update(users)
+        .set({
+          role,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(users.id, id),
+            isNull(users.deletedAt),
+          ),
+        )
+        .returning();
+
+      return user;
+    }
 }

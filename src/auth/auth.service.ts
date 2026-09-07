@@ -11,6 +11,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SessionsRepository } from './sessions.repository';
 import { SESSION_DURATION_MS } from './auth.constants';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -108,5 +109,45 @@ export class AuthService {
       .digest('hex');
 
     await this.sessionsRepository.revoke(sessionTokenHash);
+  }
+
+  async changePassword(
+    userId: number,
+    dto: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.usersRepository.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'User is no longer available.',
+      );
+    }
+
+    const currentPasswordValid = await argon2.verify(
+      user.passwordHash,
+      dto.currentPassword,
+    );
+
+    if (!currentPasswordValid) {
+      throw new UnauthorizedException(
+        'Current password is incorrect.',
+      );
+    }
+
+    const passwordHash = await argon2.hash(
+      dto.newPassword,
+      {
+        type: argon2.argon2id,
+      },
+    );
+
+    await this.usersRepository.updatePassword(
+      userId,
+      passwordHash,
+    );
+
+    await this.sessionsRepository.revokeAllForUser(
+      userId,
+    );
   }
 }

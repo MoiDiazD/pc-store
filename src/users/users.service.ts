@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { UsersRepository } from './users.repository';
+import { users } from '../database/schema';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRole } from './user-role.type';
+import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
+
+type User = typeof users.$inferSelect;
 
 @Injectable()
 export class UsersService {
@@ -21,7 +27,7 @@ export class UsersService {
       );
     }
 
-    return user;
+    return this.toPublicUser(user);
   }
   
 
@@ -47,5 +53,72 @@ export class UsersService {
     }
 
     return restoredUser;
+  }
+
+  async update(id: number, dto: UpdateUserDto) {
+    const data = {
+      ...dto,
+      email: dto.email?.trim().toLowerCase(),
+      name: dto.name?.trim(),
+    };
+
+    const updatedUser =
+      await this.usersRepository.update(id, data);
+
+    if (!updatedUser) {
+      throw new NotFoundException(
+        `User with id ${id} not found`,
+      );
+    }
+
+    return this.toPublicUser(updatedUser);
+  }
+
+  async updateAdmin(
+    id: number,
+    dto: UpdateUserAdminDto,
+  ) {
+    const data = {
+      ...dto,
+      email: dto.email?.trim().toLowerCase(),
+      name: dto.name?.trim(),
+    };
+
+    const updatedUser =
+      await this.usersRepository.update(id, data);
+
+    if (!updatedUser) {
+      throw new NotFoundException(
+        `User with id ${id} not found`,
+      );
+    }
+
+    return this.toPublicUser(updatedUser);
+  }
+
+  async updateRole(
+    id: number,
+    role: UserRole,
+  ) {
+    const updatedUser =
+      await this.usersRepository.updateRole(id, role);
+
+    if (!updatedUser) {
+      throw new NotFoundException(
+        `User with id ${id} not found`,
+      );
+    }
+
+    return this.toPublicUser(updatedUser);
+  }
+
+  private toPublicUser(user: User) {
+    const {
+      passwordHash,
+      deletedAt,
+      ...publicUser
+    } = user;
+
+    return publicUser;
   }
 }
