@@ -56,4 +56,12 @@ export class ProductsController {
     delete(@Param('id') id: string) {
         return this.productsService.delete(Number(id));
     }
+
+    @Roles('manager')
+    @Patch(':id/restore')
+    restore(@Param('id') id: string) {
+    return this.productsService.restore(
+        Number(id),
+    );
+    }
 }

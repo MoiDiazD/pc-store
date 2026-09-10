@@ -6,13 +6,14 @@ import { ProductsRepository } from './products.repository';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-  ],
+  imports: [DatabaseModule],
   controllers: [ProductsController],
   providers: [
     ProductsService,
-    ProductsRepository
-  ]
+    ProductsRepository,
+  ],
+  exports: [
+    ProductsRepository,
+  ],
 })
 export class ProductsModule {}

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, isNotNull} from 'drizzle-orm';
 
 import { DATABASE } from '../database/database.provider';
 import type { Database } from '../database/database.provider';
@@ -88,13 +88,19 @@ export class ProductsRepository extends BaseRepository<Product> {
 }
 
   async restore(id: number): Promise<Product | undefined> {
-    const [product] = await this.db
-      .update(products)
-      .set({
-        deletedAt: null,
-      })
-      .where(eq(products.id, id))
-      .returning();
-    return product;
-  }
+  const [product] = await this.db
+    .update(products)
+    .set({
+      deletedAt: null,
+    })
+    .where(
+      and(
+        eq(products.id, id),
+        isNotNull(products.deletedAt),
+      ),
+    )
+    .returning();
+
+  return product;
+}
 }

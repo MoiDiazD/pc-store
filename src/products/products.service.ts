@@ -57,4 +57,17 @@ export class ProductsService {
 
     return deletedProduct;
   }
+
+  async restore(id: number) {
+    const restoredProduct =
+      await this.productsRepository.restore(id);
+
+    if (!restoredProduct) {
+      throw new NotFoundException(
+        `Product with id ${id} not found`,
+      );
+    }
+
+    return restoredProduct;
+  }
 }

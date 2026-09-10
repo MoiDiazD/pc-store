@@ -5,13 +5,17 @@ import { products } from './products.schema';
 export const productCategories = pgTable(
   'product_categories',
   {
-    productId: integer('product_id')
+     productId: integer('product_id')
       .notNull()
-      .references(() => products.id),
+      .references(() => products.id, {
+        onDelete: 'cascade',
+      }),
 
     categoryId: integer('category_id')
       .notNull()
-      .references(() => categories.id),
+      .references(() => categories.id, {
+        onDelete: 'cascade',
+      }),
   },
   (table) => [
     primaryKey({
