@@ -7,15 +7,17 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { BrandsModule } from './brands/brands.module';
 import { CategoriesModule } from './categories/categories.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
-  imports: [
+    imports: [
     DatabaseModule,
     ProductsModule,
     UsersModule,
     AuthModule,
     BrandsModule,
     CategoriesModule,
+    CartModule,
   ],
 })
 export class AppModule {}
