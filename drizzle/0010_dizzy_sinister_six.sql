@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ADD COLUMN "currency" varchar(3) NOT NULL;

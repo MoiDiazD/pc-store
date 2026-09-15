@@ -57,6 +57,27 @@
       "when": 1789052760074,
       "tag": "0007_friendly_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789432025046,
+      "tag": "0008_careless_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789470064518,
+      "tag": "0009_broken_psylocke",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789470534714,
+      "tag": "0010_dizzy_sinister_six",
+      "breakpoints": true
     }
   ]
 }

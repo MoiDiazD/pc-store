@@ -1,12 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull, isNotNull} from 'drizzle-orm';
+import { and, eq, isNull, isNotNull, sql} from 'drizzle-orm';
 
 import { DATABASE } from '../database/database.provider';
-import type { Database } from '../database/database.provider';
+import type { Database, DatabaseTransaction } from '../database/database.provider';
 
 import { products } from '../database/schema';
 
 import { BaseRepository } from '../database/repositories/base.repository';
+
+type DbExecutor = Database | DatabaseTransaction;
 
 type Product = typeof products.$inferSelect;
 
@@ -19,8 +21,8 @@ export class ProductsRepository extends BaseRepository<Product> {
     super();
   }
 
-  async findById(id: number): Promise<Product | undefined> {
-    const [product] = await this.db
+  async findById(id: number, executor: DbExecutor = this.db): Promise<Product | undefined> {
+    const [product] = await executor
       .select()
       .from(products)
       .where(
@@ -88,19 +90,42 @@ export class ProductsRepository extends BaseRepository<Product> {
 }
 
   async restore(id: number): Promise<Product | undefined> {
-  const [product] = await this.db
-    .update(products)
-    .set({
-      deletedAt: null,
-    })
-    .where(
-      and(
-        eq(products.id, id),
-        isNotNull(products.deletedAt),
-      ),
-    )
-    .returning();
+    const [product] = await this.db
+      .update(products)
+      .set({
+        deletedAt: null,
+      })
+      .where(
+        and(
+          eq(products.id, id),
+          isNotNull(products.deletedAt),
+        ),
+      )
+      .returning();
 
-  return product;
-}
+    return product;
+  }
+
+  async decrementStockIfAvailable(
+    productId: number,
+    quantity: number,
+    executor: DbExecutor = this.db,
+  ): Promise<Product | undefined> {
+    const [product] = await executor
+      .update(products)
+      .set({
+        stock: sql`${products.stock} - ${quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(products.id, productId),
+          isNull(products.deletedAt),
+          sql`${products.stock} >= ${quantity}`,
+        ),
+      )
+      .returning();
+
+    return product;
+  }
 }

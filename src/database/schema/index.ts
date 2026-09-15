@@ -6,3 +6,6 @@ export * from './users.schema';
 export * from './sessions.schema';
 export * from './carts.schema';
 export * from './cart-items.schema';
+export * from './orders.schema';
+export * from './order-items.schema';
+export * from './payments.schema';

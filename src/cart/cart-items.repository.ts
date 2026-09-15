@@ -2,11 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { DATABASE } from '../database/database.provider';
-import type { Database } from '../database/database.provider';
+import type { Database, DatabaseTransaction } from '../database/database.provider';
 
 import { cartItems, products } from '../database/schema';
 
 type CartItem = typeof cartItems.$inferSelect;
+type DbExecutor = Database | DatabaseTransaction; 
 
 @Injectable()
 export class CartItemsRepository {
@@ -34,8 +35,9 @@ export class CartItemsRepository {
 
   async findByCartId(
     cartId: number,
-  ): Promise<CartItem[]> {
-    return this.db
+    executor: DbExecutor = this.db,
+  ) {
+    return executor
       .select()
       .from(cartItems)
       .where(eq(cartItems.cartId, cartId));
@@ -84,8 +86,8 @@ export class CartItemsRepository {
     return deletedRows.length > 0;
   }
 
-  async findDetailedByCartId(cartId: number) {
-    return this.db
+  async findDetailedByCartId(cartId: number, executor: DbExecutor = this.db) {
+    return executor
       .select({
         product: {
           id: products.id,
@@ -108,5 +110,14 @@ export class CartItemsRepository {
           isNull(products.deletedAt),
         ),
       );
+  }
+
+  async removeByCartId(
+    cartId: number,
+    executor: DbExecutor = this.db,
+  ) {
+    await executor
+      .delete(cartItems)
+      .where(eq(cartItems.cartId, cartId));
   }
 }

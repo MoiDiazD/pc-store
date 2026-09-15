@@ -3,7 +3,6 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 
 export const DATABASE = 'DATABASE';
-export type Database = ReturnType<typeof createDatabase>;
 
 const createDatabase = () => {
   const pool = new Pool({
@@ -18,3 +17,8 @@ export const databaseProvider = {
   useFactory: createDatabase,
 };
 
+export type Database = ReturnType<typeof createDatabase>;
+
+export type DatabaseTransaction = Parameters<
+  Parameters<Database['transaction']>[0]
+>[0];
