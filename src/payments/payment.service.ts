@@ -8,6 +8,22 @@ export class PaymentService {
     private readonly paymentProviderFactory: PaymentProviderFactory,
   ) {}
 
+  async constructWebhookEvent(
+    provider: string,
+    payload: Buffer,
+    signature: string,
+    webhookSecret: string,
+  ) {
+    const paymentProvider =
+      this.paymentProviderFactory.get(provider);
+
+    return paymentProvider.constructWebhookEvent(
+      payload,
+      signature,
+      webhookSecret,
+    );
+  }
+
   async createPayment(
     provider: string,
     amount: number,

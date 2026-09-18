@@ -21,15 +21,32 @@ export class StripePaymentProvider implements PaymentProvider {
     this.stripe = new Stripe(secretKey);
   }
 
+  
+  constructWebhookEvent(
+    payload: Buffer,
+    signature: string,
+    webhookSecret: string,
+    ): Stripe.Event {
+      return this.stripe.webhooks.constructEvent(
+            payload,
+            signature,
+            webhookSecret,
+      );
+    }
+
   async createPayment(
     params: CreatePaymentParams,
   ): Promise<CreatePaymentResult> {
     const paymentIntent =
-      await this.stripe.paymentIntents.create({
-        amount: params.amount,
-        currency: params.currency,
-        metadata: params.metadata,
-      });
+    await this.stripe.paymentIntents.create({
+      amount: params.amount,
+      currency: params.currency,
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'never',
+      },
+      metadata: params.metadata,
+    });
 
     if (!paymentIntent.client_secret) {
       throw new Error(

@@ -9,6 +9,7 @@ import { OrdersRepository } from './orders.repository';
 import { OrderItemsRepository } from './order-items.repository';
 import { OrdersService } from './orders.service';
 import { PaymentsModule } from '../payments/payment.module';
+import { StripeWebhookController } from '../payments/stripe-webhook.controller';
 
 @Module({
   imports: [
@@ -17,7 +18,10 @@ import { PaymentsModule } from '../payments/payment.module';
     ProductsModule,
     PaymentsModule,
   ],
-  controllers: [OrdersController],
+  controllers: [
+    OrdersController,
+    StripeWebhookController,
+  ],
   providers: [
     OrdersService,
     OrdersRepository,

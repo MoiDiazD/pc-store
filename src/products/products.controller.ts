@@ -16,7 +16,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { RoleGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Public } from '../auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @Controller('products')
 export class ProductsController {

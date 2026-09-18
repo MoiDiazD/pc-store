@@ -8,7 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { Public } from '../auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 
 import { CategoriesService } from './categories.service';

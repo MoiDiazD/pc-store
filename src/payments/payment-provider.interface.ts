@@ -13,4 +13,10 @@ export interface PaymentProvider {
   createPayment(
     params: CreatePaymentParams,
   ): Promise<CreatePaymentResult>;
+
+  constructWebhookEvent(
+    payload: Buffer,
+    signature: string,
+    webhookSecret: string,
+  ): unknown;
 }

@@ -20,7 +20,7 @@ import {
 } from './auth.constants';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { Public } from './public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')

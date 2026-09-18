@@ -18,6 +18,7 @@ import { StripePaymentProvider } from './stripe-payment.provider';
   exports: [
     PaymentService,
     PaymentsRepository,
+    StripePaymentProvider,
   ],
 })
 export class PaymentsModule {}

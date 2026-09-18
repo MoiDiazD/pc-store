@@ -51,5 +51,40 @@ export class PaymentsRepository {
         .limit(1);
 
     return payment;
-    }
+  }
+
+  async updateStatus(
+    id: number,
+    status: 'pending' | 'succeeded' | 'failed' | 'cancelled',
+    executor: DbExecutor = this.db,
+  ) {
+    const [payment] = await executor
+      .update(payments)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(payments.id, id))
+      .returning();
+
+    return payment;
+  }
+
+  async updateProviderPaymentId(
+    id: number,
+    providerPaymentId: string,
+    executor: DbExecutor = this.db,
+  ) {
+    const [payment] = await executor
+      .update(payments)
+      .set({
+        providerPaymentId,
+        updatedAt: new Date(),
+      })
+      .where(eq(payments.id, id))
+      .returning();
+
+    return payment;
+  }
+
 }

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 
 import { Roles } from '../auth/roles.decorator';
-import { Public } from '../auth/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 import { BrandsService } from './brands.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
