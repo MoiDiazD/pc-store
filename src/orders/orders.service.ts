@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
@@ -22,6 +23,14 @@ import { PaymentsRepository } from '../payments/payments.repository';
 
 
 type ConfirmPaymentData = {
+  provider: string;
+  providerPaymentId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+};
+
+type CancelPaymentData = {
   provider: string;
   providerPaymentId: string;
   orderId: string;
@@ -55,6 +64,18 @@ export class OrdersService {
         throw new BadRequestException('Cart is empty.');
       }
 
+      const lockedCart =
+        await this.cartRepository.lockForCheckout(
+          cart.id,
+          tx,
+        );
+
+      if (!lockedCart) {
+        throw new ConflictException(
+          'Cart is already locked by a pending checkout.',
+        );
+      }
+
       const items = await this.cartItemsRepository.findByCartId(
         cart.id,
         tx,
@@ -62,6 +83,18 @@ export class OrdersService {
 
       if (items.length === 0) {
         throw new BadRequestException('Cart is empty.');
+      }
+
+      const existingPendingOrder =
+        await this.ordersRepository.findPendingByUserId(
+          userId,
+          tx,
+        );
+
+      if (existingPendingOrder) {
+        throw new ConflictException(
+          'There is already a pending checkout for this user.',
+        );
       }
 
       const orderItemsData: Array<{
@@ -192,8 +225,10 @@ export class OrdersService {
         );
       }
 
-      if (payment.status === 'succeeded') {
-        return;
+      if (payment.status !== 'pending') {
+        throw new BadRequestException(
+          'Payment is not pending.',
+        );
       }
 
       const order =
@@ -241,7 +276,113 @@ export class OrdersService {
           cart.id,
           tx,
         );
+        await this.cartRepository.unlockCheckout(
+          cart.id,
+          tx,
+        );
       }
+    });
+  }
+
+  async cancelPayment(data: CancelPaymentData) {
+    const orderId = Number(data.orderId);
+
+    if (!Number.isInteger(orderId)) {
+      throw new BadRequestException(
+        'Invalid order ID.',
+      );
+    }
+
+    await this.db.transaction(async (tx) => {
+      const payment =
+        await this.paymentsRepository.findByProviderPaymentId(
+          data.provider,
+          data.providerPaymentId,
+          tx,
+        );
+
+      if (!payment) {
+        throw new NotFoundException(
+          'Payment not found.',
+        );
+      }
+
+      if (payment.status !== 'pending') {
+        return;
+      }
+
+      if (
+        payment.amount !== data.amount ||
+        payment.currency.toLowerCase() !==
+          data.currency.toLowerCase()
+      ) {
+        throw new BadRequestException(
+          'Payment amount or currency mismatch.',
+        );
+      }
+
+      const order =
+        await this.ordersRepository.findById(
+          payment.orderId,
+          tx,
+        );
+
+      if (!order) {
+        throw new NotFoundException(
+          'Order not found.',
+        );
+      }
+
+      if (order.id !== orderId) {
+        throw new BadRequestException(
+          'Payment does not belong to the order.',
+        );
+      }
+
+      if (order.status !== 'pending') {
+        throw new BadRequestException(
+          'Order is not pending.',
+        );
+      }
+
+      const orderItems =
+        await this.orderItemsRepository.findByOrderId(
+          order.id,
+          tx,
+        );
+
+      for (const item of orderItems) {
+        await this.productsRepository.incrementStock(
+          item.productId,
+          item.quantity,
+          tx,
+        );
+      }
+
+      const cart =
+      await this.cartRepository.findByUserId(
+        order.userId,
+        tx,
+      );
+
+    if (cart) {
+      await this.cartRepository.unlockCheckout(
+        cart.id,
+        tx,
+      );
+    }
+
+      await this.paymentsRepository.updateStatus(
+        payment.id,
+        'failed',
+        tx,
+      );
+
+      await this.ordersRepository.updateStatus(
+        order.id,
+        'cancelled',
+        tx,
+      );
     });
   }
 }

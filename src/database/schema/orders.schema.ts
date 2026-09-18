@@ -4,8 +4,11 @@ import {
   pgEnum,
   pgTable,
   timestamp,
-  index
+  index,
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
+
+import { sql } from 'drizzle-orm';
 
 import { users } from './users.schema';
 
@@ -50,5 +53,8 @@ export const orders = pgTable('orders', {
     ,
   (table) => [
     index('orders_user_id_idx').on(table.userId),
-  ],   
+    uniqueIndex('orders_one_pending_per_user_idx')
+        .on(table.userId)
+        .where(sql`${table.status} = 'pending'`),
+        ],   
 );

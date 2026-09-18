@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "orders_one_pending_per_user_idx" ON "orders" USING btree ("user_id") WHERE "orders"."status" = 'pending';

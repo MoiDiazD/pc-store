@@ -65,10 +65,19 @@ export class StripeWebhookController {
           amount: event.data.object.amount,
           currency: event.data.object.currency,
         });
-        break;
+      break;
+      case 'payment_intent.payment_failed':
+        await this.ordersService.cancelPayment({
+          provider: 'stripe',
+          providerPaymentId: event.data.object.id,
+          orderId: event.data.object.metadata.orderId,
+          amount: event.data.object.amount,
+          currency: event.data.object.currency,
+        });
+      break;
 
       default:
-        break;
+      break;
     }
 
     return {

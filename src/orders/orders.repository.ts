@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { DATABASE } from '../database/database.provider';
 
@@ -52,6 +52,24 @@ export class OrdersRepository {
       .from(orders)
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));
+  }
+
+  async findPendingByUserId(
+    userId: number,
+    executor: DbExecutor = this.db,
+  ) {
+    const [order] = await executor
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.userId, userId),
+          eq(orders.status, 'pending'),
+        ),
+      )
+      .limit(1);
+
+    return order;
   }
 
   async updateStatus(

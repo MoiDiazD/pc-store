@@ -18,6 +18,10 @@ export const carts = pgTable('carts', {
       onDelete: 'cascade',
     }),
 
+  checkoutLockedAt: timestamp('checkout_locked_at', {
+    withTimezone: true,
+  }),
+
   createdAt: timestamp('created_at', {
     withTimezone: true,
   })

@@ -128,4 +128,21 @@ export class ProductsRepository extends BaseRepository<Product> {
 
     return product;
   }
+
+  async incrementStock(
+    productId: number,
+    quantity: number,
+    executor: DbExecutor = this.db,
+  ) {
+    const [product] = await executor
+      .update(products)
+      .set({
+        stock: sql`${products.stock} + ${quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, productId))
+      .returning();
+
+    return product;
+  }
 }

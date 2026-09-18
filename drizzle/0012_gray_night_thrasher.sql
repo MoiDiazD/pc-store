@@ -1,0 +1,1 @@
+ALTER TABLE "carts" ADD COLUMN "checkout_locked_at" timestamp with time zone;

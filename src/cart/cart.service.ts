@@ -1,5 +1,7 @@
 import {
     BadRequestException,
+  ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +12,9 @@ import { CartItemsRepository } from './cart-items.repository';
 import { CartRepository } from './cart.repository';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
+import { DATABASE } from '../database/database.provider';
+import type { Database, DatabaseTransaction } from '../database/database.provider';
+import { text } from 'drizzle-orm/gel-core';
 
 @Injectable()
 export class CartService {
@@ -17,6 +22,9 @@ export class CartService {
     private readonly cartRepository: CartRepository,
     private readonly cartItemsRepository: CartItemsRepository,
     private readonly productsRepository: ProductsRepository,
+
+    @Inject(DATABASE)
+    private readonly db: Database,
   ) {}
 
   async getCart(userId: number) {
@@ -38,57 +46,107 @@ export class CartService {
     };
   }
 
+  private async getUnlockedCart(
+    userId: number,
+    tx: DatabaseTransaction,
+  ) {
+    const cart =
+      await this.cartRepository.findByUserId(
+        userId,
+        tx,
+      );
+
+    if (!cart) {
+      throw new NotFoundException('Cart not found.');
+    }
+
+    if (cart.checkoutLockedAt) {
+      throw new ConflictException(
+        'Cart is locked by a pending checkout.',
+      );
+    }
+
+    return cart;
+  }
+
+  private async getUnlockedCartForUpdate(
+    userId: number,
+    tx: DatabaseTransaction,
+  ) {
+    const cart =
+      await this.cartRepository.findByUserIdForUpdate(
+        userId,
+        tx,
+      );
+
+    if (!cart) {
+      throw new NotFoundException('Cart not found.');
+    }
+
+    if (cart.checkoutLockedAt) {
+      throw new ConflictException(
+        'Cart is locked by a pending checkout.',
+      );
+    }
+
+    return cart;
+  }
+
   async addItem(
     userId: number,
     dto: AddCartItemDto,
   ) {
-    let cart = await this.cartRepository.findByUserId(userId);
-
-    if (!cart) {
-      cart = await this.cartRepository.create(userId);
-    }
-
-    const product =
-      await this.productsRepository.findById(dto.productId);
-
-    if (!product) {
-      throw new NotFoundException(
-        `Product with id ${dto.productId} not found`,
+    return this.db.transaction(async (tx) => {
+      let cart = await this.getUnlockedCart(
+        userId,
+        tx,
       );
-    }
+      if (!cart) {
+        cart = await this.cartRepository.create(userId);
+      }
 
-    if (dto.quantity > product.stock) {
-      throw new BadRequestException(
-        `Not enough stock for product ${dto.productId}`,
-      );
-    }
+      const product =
+        await this.productsRepository.findById(dto.productId, tx);
 
-    const existingItem =
-      await this.cartItemsRepository.findByCartAndProduct(
-        cart.id,
-        dto.productId,
-      );
+      if (!product) {
+        throw new NotFoundException(
+          `Product with id ${dto.productId} not found`,
+        );
+      }
 
-    if (existingItem) {
-      const newQuantity =
-        existingItem.quantity + dto.quantity;
-
-      if (newQuantity > product.stock) {
+      if (dto.quantity > product.stock) {
         throw new BadRequestException(
           `Not enough stock for product ${dto.productId}`,
         );
       }
 
-      return this.cartItemsRepository.updateQuantity(
-        existingItem.id,
-        newQuantity,
-      );
-    }
+      const existingItem =
+        await this.cartItemsRepository.findByCartAndProduct(
+          cart.id,
+          dto.productId,
+        );
 
-    return this.cartItemsRepository.create({
-      cartId: cart.id,
-      productId: dto.productId,
-      quantity: dto.quantity,
+      if (existingItem) {
+        const newQuantity =
+          existingItem.quantity + dto.quantity;
+
+        if (newQuantity > product.stock) {
+          throw new BadRequestException(
+            `Not enough stock for product ${dto.productId}`,
+          );
+        }
+
+        return this.cartItemsRepository.updateQuantity(
+          existingItem.id,
+          newQuantity,
+        );
+      }
+
+      return this.cartItemsRepository.create({
+        cartId: cart.id,
+        productId: dto.productId,
+        quantity: dto.quantity,
+      });
     });
   }
 
@@ -97,71 +155,79 @@ export class CartService {
     productId: number,
     dto: UpdateCartItemDto,
   ) {
-    const cart =
-      await this.cartRepository.findByUserId(userId);
+    return this.db.transaction(async (tx) => {
+      const cart =
+        await this.getUnlockedCartForUpdate(
+          userId,
+          tx,
+        );
+      if (!cart) {
+        throw new NotFoundException(
+          'Cart not found.',
+        );
+      }
 
-    if (!cart) {
-      throw new NotFoundException(
-        'Cart not found.',
+      const product =
+        await this.productsRepository.findById(productId);
+
+      if (!product) {
+        throw new NotFoundException(
+          `Product with id ${productId} not found`,
+        );
+      }
+
+      if (dto.quantity > product.stock) {
+        throw new BadRequestException(
+          `Not enough stock for product ${productId}`,
+        );
+      }
+
+      const item =
+        await this.cartItemsRepository.findByCartAndProduct(
+          cart.id,
+          productId,
+        );
+
+      if (!item) {
+        throw new NotFoundException(
+          `Product ${productId} is not in the cart`,
+        );
+      }
+
+      return this.cartItemsRepository.updateQuantity(
+        item.id,
+        dto.quantity,
       );
-    }
-
-    const product =
-      await this.productsRepository.findById(productId);
-
-    if (!product) {
-      throw new NotFoundException(
-        `Product with id ${productId} not found`,
-      );
-    }
-
-    if (dto.quantity > product.stock) {
-      throw new BadRequestException(
-        `Not enough stock for product ${productId}`,
-      );
-    }
-
-    const item =
-      await this.cartItemsRepository.findByCartAndProduct(
-        cart.id,
-        productId,
-      );
-
-    if (!item) {
-      throw new NotFoundException(
-        `Product ${productId} is not in the cart`,
-      );
-    }
-
-    return this.cartItemsRepository.updateQuantity(
-      item.id,
-      dto.quantity,
-    );
+    });
   }
 
   async removeItem(
     userId: number,
     productId: number,
   ): Promise<void> {
-    const cart =
-      await this.cartRepository.findByUserId(userId);
+    return this.db.transaction(async (tx) => {
+      const cart =
+        await this.getUnlockedCartForUpdate(
+          userId,
+          tx,
+        );
+      if (!cart) {
+        throw new NotFoundException(
+          'Cart not found.',
+        );
+      }
 
-    if (!cart) {
-      throw new NotFoundException(
-        'Cart not found.',
-      );
-    }
+      const removed =
+        await this.cartItemsRepository.remove(
+          cart.id,
+          productId,
+        );
 
-    const removed =
-      await this.cartItemsRepository.remove(
-        cart.id,
-        productId,
-      );
-
-    if (!removed) {
-      throw new NotFoundException(
-        `Product ${productId} is not in the cart`,
-      );
-    }
+      if (!removed) {
+        throw new NotFoundException(
+          `Product ${productId} is not in the cart`,
+        );
+      }
+    });
   }
 }
