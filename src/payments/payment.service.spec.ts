@@ -73,14 +73,14 @@ describe('PaymentService', () => {
         throw error;
       });
 
-      await expect(
+      expect(() =>
         service.constructWebhookEvent(
           'unknown',
           Buffer.from('payload'),
           'signature',
           'secret',
         ),
-      ).rejects.toThrow(error);
+      ).toThrow(error);
 
       expect(paymentProviderFactory.get).toHaveBeenCalledOnce();
       expect(paymentProvider.constructWebhookEvent).not.toHaveBeenCalled();
