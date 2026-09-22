@@ -1,15 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull, isNotNull, sql} from 'drizzle-orm';
+import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 
-import { DATABASE } from '../database/database.provider';
-import type { Database, DatabaseTransaction } from '../database/database.provider';
-
+import {
+  DATABASE,
+  type Database,
+  type DatabaseTransaction,
+} from '../database/database.provider';
 import { products } from '../database/schema';
-
 import { BaseRepository } from '../database/repositories/base.repository';
 
 type DbExecutor = Database | DatabaseTransaction;
-
 type Product = typeof products.$inferSelect;
 
 @Injectable()
@@ -21,15 +21,15 @@ export class ProductsRepository extends BaseRepository<Product> {
     super();
   }
 
-  async findById(id: number, executor: DbExecutor = this.db): Promise<Product | undefined> {
+  async findById(
+    id: number,
+    executor: DbExecutor = this.db,
+  ): Promise<Product | undefined> {
     const [product] = await executor
       .select()
       .from(products)
       .where(
-        and(
-          eq(products.id, id),
-          isNull(products.deletedAt),
-        ),
+        and(eq(products.id, id), isNull(products.deletedAt)),
       );
 
     return product;
@@ -62,10 +62,7 @@ export class ProductsRepository extends BaseRepository<Product> {
         updatedAt: new Date(),
       })
       .where(
-        and(
-          eq(products.id, id),
-          isNull(products.deletedAt),
-        ),
+        and(eq(products.id, id), isNull(products.deletedAt)),
       )
       .returning();
 
@@ -73,21 +70,18 @@ export class ProductsRepository extends BaseRepository<Product> {
   }
 
   async softDelete(id: number): Promise<Product | undefined> {
-  const [product] = await this.db
-    .update(products)
-    .set({
-      deletedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(products.id, id),
-        isNull(products.deletedAt),
-      ),
-    )
-    .returning();
+    const [product] = await this.db
+      .update(products)
+      .set({
+        deletedAt: new Date(),
+      })
+      .where(
+        and(eq(products.id, id), isNull(products.deletedAt)),
+      )
+      .returning();
 
-  return product;
-}
+    return product;
+  }
 
   async restore(id: number): Promise<Product | undefined> {
     const [product] = await this.db
@@ -96,10 +90,7 @@ export class ProductsRepository extends BaseRepository<Product> {
         deletedAt: null,
       })
       .where(
-        and(
-          eq(products.id, id),
-          isNotNull(products.deletedAt),
-        ),
+        and(eq(products.id, id), isNotNull(products.deletedAt)),
       )
       .returning();
 
