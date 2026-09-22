@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { ValidationPipe } from '@nestjs/common';
 import cookie from '@fastify/cookie';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { AppModule } from '../../src/app.module';
+import { PostgresExceptionFilter } from '../../src/common/filters/postgres-exception.filter';
 
 describe('Auth E2E', () => {
   let app: NestFastifyApplication;
@@ -19,6 +21,13 @@ describe('Auth E2E', () => {
     );
 
     await app.register(cookie);
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        transform: true,
+      }),
+    );
+    app.useGlobalFilters(new PostgresExceptionFilter());
     await app.init();
   });
 
