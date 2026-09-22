@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import { ConflictException, HttpStatus } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { PostgresExceptionFilter } from './postgres-exception.filter';
 
