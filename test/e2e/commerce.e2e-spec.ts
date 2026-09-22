@@ -147,11 +147,24 @@ describe('Commerce E2E', () => {
       },
     });
 
-    await server.inject({
+    const addedToCheckoutCart = await server.inject({
       method: 'POST',
       url: '/cart/items',
       cookies: { session: customer },
       payload: { productId: product.json().id, quantity: 2 },
+    });
+    expect(addedToCheckoutCart.statusCode).toBe(201);
+
+    const checkoutCart = await server.inject({
+      method: 'GET',
+      url: '/cart',
+      cookies: { session: customer },
+    });
+    expect(checkoutCart.statusCode).toBe(200);
+    expect(checkoutCart.json().items).toHaveLength(1);
+    expect(checkoutCart.json().items[0]).toMatchObject({
+      product: { id: product.json().id },
+      quantity: 2,
     });
 
     const checkout = await server.inject({
@@ -239,12 +252,13 @@ describe('Commerce E2E', () => {
       },
     });
 
-    await server.inject({
+    const addedToFirstUserCart = await server.inject({
       method: 'POST',
       url: '/cart/items',
       cookies: { session: firstUser },
       payload: { productId: product.json().id, quantity: 1 },
     });
+    expect(addedToFirstUserCart.statusCode).toBe(201);
 
     const checkout = await server.inject({
       method: 'POST',
