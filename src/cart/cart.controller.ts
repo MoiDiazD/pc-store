@@ -11,8 +11,6 @@ import {
 
 import type { FastifyRequest } from 'fastify';
 
-import { Roles } from '../auth/roles.decorator';
-
 import { CartService } from './cart.service';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
@@ -25,9 +23,7 @@ export class CartController {
 
   @Get()
   getCart(@Req() request: FastifyRequest) {
-    return this.cartService.getCart(
-      request.user!.id,
-    );
+    return this.cartService.getCart(request.user!.id);
   }
 
   @Post('items')
@@ -35,10 +31,7 @@ export class CartController {
     @Req() request: FastifyRequest,
     @Body() dto: AddCartItemDto,
   ) {
-    return this.cartService.addItem(
-      request.user!.id,
-      dto,
-    );
+    return this.cartService.addItem(request.user!.id, dto);
   }
 
   @Patch('items/:productId')
@@ -59,9 +52,6 @@ export class CartController {
     @Req() request: FastifyRequest,
     @Param('productId') productId: string,
   ) {
-    return this.cartService.removeItem(
-      request.user!.id,
-      Number(productId),
-    );
+    return this.cartService.removeItem(request.user!.id, Number(productId));
   }
 }

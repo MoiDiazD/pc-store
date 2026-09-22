@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthGuard } from './auth.guard';
 import { SESSION_COOKIE_NAME } from './auth.constants';
-import { IS_PUBLIC_KEY } from '../common/decorators/public.decorator';
 
 describe('AuthGuard', () => {
   const sessionsRepository = { findValidByTokenHash: vi.fn() };

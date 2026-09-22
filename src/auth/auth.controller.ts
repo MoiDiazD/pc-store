@@ -84,7 +84,7 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Get('me')
-  async me(@Req() request: FastifyRequest) {
+  me(@Req() request: FastifyRequest) {
     return request.user;
   }
 

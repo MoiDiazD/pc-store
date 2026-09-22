@@ -66,21 +66,21 @@ describe('PaymentService', () => {
       );
     });
 
-    it('should propagate errors thrown by the provider factory', async () => {
+    it('should propagate errors thrown by the provider factory', () => {
       const error = new Error('Unsupported payment provider');
 
       paymentProviderFactory.get.mockImplementation(() => {
         throw error;
       });
 
-      await expect(
+      expect(() =>
         service.constructWebhookEvent(
           'unknown',
           Buffer.from('payload'),
           'signature',
           'secret',
         ),
-      ).rejects.toThrow(error);
+      ).toThrow(error);
 
       expect(paymentProviderFactory.get).toHaveBeenCalledOnce();
       expect(paymentProvider.constructWebhookEvent).not.toHaveBeenCalled();
