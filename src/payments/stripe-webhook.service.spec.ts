@@ -23,10 +23,6 @@ describe('StripeWebhookService', () => {
     updateStatus: vi.fn(),
   };
 
-  const orderItemsRepository = {
-    findByOrderId: vi.fn(),
-  };
-
   const cartRepository = {
     findByUserId: vi.fn(),
   };
@@ -52,7 +48,6 @@ describe('StripeWebhookService', () => {
       stripePaymentProvider as any,
       paymentsRepository as any,
       ordersRepository as any,
-      orderItemsRepository as any,
       cartRepository as any,
       cartItemsRepository as any,
       db as any,

@@ -7,7 +7,6 @@ import {
 import Stripe from 'stripe';
 
 import { OrdersRepository } from '../orders/orders.repository';
-import { OrderItemsRepository } from '../orders/order-items.repository';
 import { CartRepository } from '../cart/cart.repository';
 import { CartItemsRepository } from '../cart/cart-items.repository';
 
@@ -26,7 +25,6 @@ export class StripeWebhookService {
     private readonly stripePaymentProvider: StripePaymentProvider,
     private readonly paymentsRepository: PaymentsRepository,
     private readonly ordersRepository: OrdersRepository,
-    private readonly orderItemsRepository: OrderItemsRepository,
     private readonly cartRepository: CartRepository,
     private readonly cartItemsRepository: CartItemsRepository,
 
