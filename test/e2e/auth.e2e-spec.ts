@@ -115,7 +115,7 @@ describe('Auth E2E', () => {
     await request(app.getHttpServer())
       .post('/auth/logout')
       .set('Cookie', cookies)
-      .expect(204);
+      .expect(201);
 
     await request(app.getHttpServer())
       .get('/auth/me')
