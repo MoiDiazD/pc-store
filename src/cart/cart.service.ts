@@ -47,25 +47,6 @@ export class CartService {
     };
   }
 
-  private async getUnlockedCart(
-    userId: number,
-    tx: DatabaseTransaction,
-  ) {
-    const cart = await this.cartRepository.findByUserId(userId, tx);
-
-    if (!cart) {
-      throw new NotFoundException('Cart not found.');
-    }
-
-    if (cart.checkoutLockedAt) {
-      throw new ConflictException(
-        'Cart is locked by a pending checkout.',
-      );
-    }
-
-    return cart;
-  }
-
   private async getUnlockedCartForUpdate(
     userId: number,
     tx: DatabaseTransaction,
