@@ -93,7 +93,9 @@ describe('Commerce E2E', () => {
     });
     expect(cart.json().items).toHaveLength(1);
     expect(cart.json().items[0]).toMatchObject({
-      productId: product.json().id,
+      product: {
+        id: product.json().id,
+      },
       quantity: 3,
     });
 
@@ -158,6 +160,9 @@ describe('Commerce E2E', () => {
       cookies: { session: customer },
     });
 
+    if (checkout.statusCode !== 201) {
+      throw new Error(`Checkout failed: ${checkout.statusCode} ${checkout.body}`);
+    }
     expect(checkout.statusCode).toBe(201);
     expect(checkout.json()).toMatchObject({
       provider: 'stripe',
