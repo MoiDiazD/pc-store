@@ -48,7 +48,7 @@ describe('Users E2E', () => {
     expect(updated.statusCode).toBe(200);
     expect(updated.json()).toMatchObject({
       name: 'Updated Name',
-      email: 'UPDATED@EXAMPLE.COM',
+      email: 'updated@example.com',
     });
   });
 
