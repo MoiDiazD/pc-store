@@ -10,6 +10,7 @@ import { OrderItemsRepository } from './order-items.repository';
 import { OrdersService } from './orders.service';
 import { PaymentsModule } from '../payments/payment.module';
 import { StripeWebhookController } from '../payments/stripe-webhook.controller';
+import { PendingCheckoutCleanupService } from './pending-checkout-cleanup.service';
 
 @Module({
   imports: [
@@ -23,9 +24,10 @@ import { StripeWebhookController } from '../payments/stripe-webhook.controller';
     StripeWebhookController,
   ],
   providers: [
-    OrdersService,
-    OrdersRepository,
-    OrderItemsRepository,
+  OrdersService,
+  OrdersRepository,
+  OrderItemsRepository,
+  PendingCheckoutCleanupService,
   ],
 })
 export class OrdersModule {}

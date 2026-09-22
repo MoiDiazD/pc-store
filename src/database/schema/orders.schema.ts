@@ -49,6 +49,9 @@ export const orders = pgTable('orders', {
     })
         .defaultNow()
         .notNull(),
+    expiresAt: timestamp('expires_at', {
+        withTimezone: true,
+    }),
     }
     ,
   (table) => [

@@ -53,6 +53,19 @@ export class PaymentsRepository {
     return payment;
   }
 
+  async findByOrderId(
+  orderId: number,
+  executor: DbExecutor = this.db,
+  ) {
+    const [payment] = await executor
+      .select()
+      .from(payments)
+      .where(eq(payments.orderId, orderId))
+      .limit(1);
+
+    return payment;
+  }
+
   async updateStatus(
     id: number,
     status: 'pending' | 'succeeded' | 'failed' | 'cancelled',

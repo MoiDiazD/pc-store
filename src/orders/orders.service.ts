@@ -138,11 +138,15 @@ export class OrdersService {
 
       const total = (totalCents / 100).toFixed(2);
 
+      const expiresAt = new Date(
+        Date.now() + 30 * 60 * 1000,
+      );
       const order = await this.ordersRepository.create(
         {
           userId,
           status: 'pending',
           total,
+          expiresAt,
         },
         tx,
       );
@@ -193,15 +197,15 @@ export class OrdersService {
   }
 
   async confirmPayment(data: ConfirmPaymentData) {
-  const orderId = Number(data.orderId);
+    const orderId = Number(data.orderId);
 
-  if (!Number.isInteger(orderId)) {
-    throw new BadRequestException(
-      'Invalid order ID.',
-    );
-  }
+    if (!Number.isInteger(orderId)) {
+      throw new BadRequestException(
+        'Invalid order ID.',
+      );
+    }
 
-  await this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const payment =
         await this.paymentsRepository.findByProviderPaymentId(
           data.provider,
@@ -383,6 +387,69 @@ export class OrdersService {
         'cancelled',
         tx,
       );
+    });
+  }
+
+  async cancelExpiredCheckout(orderId: number) {
+    await this.db.transaction(async (tx) => {
+      const order =
+        await this.ordersRepository.findById(
+          orderId,
+          tx,
+        );
+
+      if (!order || order.status !== 'pending') {
+        return;
+      }
+
+      const payment =
+        await this.paymentsRepository.findByOrderId(
+          order.id,
+          tx,
+        );
+
+      if (!payment || payment.status !== 'pending') {
+        return;
+      }
+
+      const orderItems =
+        await this.orderItemsRepository.findByOrderId(
+          order.id,
+          tx,
+        );
+
+      for (const item of orderItems) {
+        await this.productsRepository.incrementStock(
+          item.productId,
+          item.quantity,
+          tx,
+        );
+      }
+
+      await this.paymentsRepository.updateStatus(
+        payment.id,
+        'cancelled',
+        tx,
+      );
+
+      await this.ordersRepository.updateStatus(
+        order.id,
+        'cancelled',
+        tx,
+      );
+
+      const cart =
+        await this.cartRepository.findByUserId(
+          order.userId,
+          tx,
+        );
+
+      if (cart) {
+        await this.cartRepository.unlockCheckout(
+          cart.id,
+          tx,
+        );
+      }
     });
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import Stripe from 'stripe';
+import Stripe, { PaymentIntent } from 'stripe';
 
 import type {
   CreatePaymentParams,
@@ -58,5 +58,17 @@ export class StripePaymentProvider implements PaymentProvider {
       providerPaymentId: paymentIntent.id,
       clientSecret: paymentIntent.client_secret,
     };
+  }
+
+  async cancelPayment(
+    providerPaymentId: string,
+  ): Promise<PaymentIntent> {
+    return await this.stripe.paymentIntents.cancel(
+      providerPaymentId,
+      {
+        cancellation_reason: 'abandoned',
+      },
+    );
+    
   }
 }

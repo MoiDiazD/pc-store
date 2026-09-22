@@ -75,6 +75,13 @@ export class StripeWebhookController {
           currency: event.data.object.currency,
         });
       break;
+      case 'payment_intent.canceled':
+        await this.ordersService.cancelExpiredCheckout(
+          Number(
+            event.data.object.metadata.orderId,
+          ),
+        );
+      break;
 
       default:
       break;

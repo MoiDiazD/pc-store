@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, lte } from 'drizzle-orm';
 
 import { DATABASE } from '../database/database.provider';
 
@@ -70,6 +70,21 @@ export class OrdersRepository {
       .limit(1);
 
     return order;
+  }
+
+  async findExpiredPending(
+    now: Date = new Date(),
+  ) {
+    return this.db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.status, 'pending'),
+          isNotNull(orders.expiresAt),
+          lte(orders.expiresAt, now),
+        ),
+      );
   }
 
   async updateStatus(

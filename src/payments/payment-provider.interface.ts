@@ -1,3 +1,5 @@
+import { PaymentIntent } from "stripe";
+
 export interface CreatePaymentParams {
   amount: number;
   currency: string;
@@ -19,4 +21,10 @@ export interface PaymentProvider {
     signature: string,
     webhookSecret: string,
   ): unknown;
+
+  cancelPayment(
+    providerPaymentId: string,
+    amount: number,
+    currency: string,
+  ): Promise<PaymentIntent>;
 }
