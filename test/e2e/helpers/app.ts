@@ -5,6 +5,9 @@ import cookie from '@fastify/cookie';
 import { AppModule } from '../../../src/app.module';
 import { PostgresExceptionFilter } from '../../../src/common/filters/postgres-exception.filter';
 import { StripePaymentProvider } from '../../../src/payments/stripe-payment.provider';
+import { db } from '../../helpers/database';
+import { users } from '../../../src/database/schema';
+import { eq } from 'drizzle-orm';
 
 export type E2eApp = NestFastifyApplication;
 
@@ -48,6 +51,10 @@ export async function createE2eApp(): Promise<E2eApp> {
   await app.getHttpAdapter().getInstance().ready();
 
   return app;
+}
+
+export async function promoteToManager(email: string): Promise<void> {
+  await db.update(users).set({ role: 'manager' }).where(eq(users.email, email));
 }
 
 export async function registerAndLogin(
