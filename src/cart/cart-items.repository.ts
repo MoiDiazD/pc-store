@@ -19,8 +19,9 @@ export class CartItemsRepository {
   async findByCartAndProduct(
     cartId: number,
     productId: number,
+    executor: DbExecutor = this.db,
   ): Promise<CartItem | undefined> {
-    const [item] = await this.db
+    const [item] = await executor
       .select()
       .from(cartItems)
       .where(
@@ -45,8 +46,9 @@ export class CartItemsRepository {
 
   async create(
     data: typeof cartItems.$inferInsert,
+    executor: DbExecutor = this.db,
   ): Promise<CartItem> {
-    const [item] = await this.db
+    const [item] = await executor
       .insert(cartItems)
       .values(data)
       .returning();
@@ -57,8 +59,9 @@ export class CartItemsRepository {
   async updateQuantity(
     id: number,
     quantity: number,
+    executor: DbExecutor = this.db,
   ): Promise<CartItem | undefined> {
-    const [item] = await this.db
+    const [item] = await executor
       .update(cartItems)
       .set({
         quantity,
@@ -72,8 +75,9 @@ export class CartItemsRepository {
   async remove(
     cartId: number,
     productId: number,
+    executor: DbExecutor = this.db,
   ): Promise<boolean> {
-    const deletedRows = await this.db
+    const deletedRows = await executor
       .delete(cartItems)
       .where(
         and(
