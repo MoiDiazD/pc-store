@@ -87,6 +87,25 @@ export class OrdersRepository {
       );
   }
 
+  async findByIdForUser(
+    orderId: number,
+    userId: number,
+    executor: DbExecutor = this.db,
+  ) {
+    const [order] = await executor
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.id, orderId),
+          eq(orders.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    return order;
+  }
+
   async updateStatus(
     id: number,
     status: 'pending' | 'confirmed' | 'cancelled',

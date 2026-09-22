@@ -53,6 +53,48 @@ export class OrdersService {
     private readonly paymentsRepository: PaymentsRepository,
   ) {}
 
+  async findMyOrder(
+    userId: number,
+    orderId: number,
+  ) {
+    const order =
+      await this.ordersRepository.findByIdForUser(
+        orderId,
+        userId,
+      );
+
+    if (!order) {
+      throw new NotFoundException(
+        'Order not found.',
+      );
+    }
+
+    const items =
+      await this.orderItemsRepository.findByOrderId(
+        order.id,
+      );
+
+    return {
+      ...order,
+      items,
+    };
+  }
+
+  async findMyOrders(userId: number) {
+    const orders =
+      await this.ordersRepository.findByUserId(userId);
+
+    return Promise.all(
+      orders.map(async (order) => ({
+        ...order,
+        items:
+          await this.orderItemsRepository.findByOrderId(
+            order.id,
+          ),
+      })),
+    );
+  }
+
   async checkout(userId: number) {
     const checkoutData = await this.db.transaction(async (tx) => {
       const cart = await this.cartRepository.findByUserId(
