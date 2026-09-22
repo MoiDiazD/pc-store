@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createE2eApp, registerAndLogin } from './helpers/app';
+import { createE2eApp, promoteToManager, registerAndLogin } from './helpers/app';
 
 describe('Resources E2E', () => {
   let app: Awaited<ReturnType<typeof createE2eApp>>;
@@ -66,19 +66,7 @@ describe('Resources E2E', () => {
       'Resource Manager',
     );
 
-    const managerUser = await server.inject({
-      method: 'GET',
-      url: '/users/me',
-      cookies: { session: managerCookie },
-    });
-    expect(managerUser.statusCode).toBe(200);
-
-    const roleResponse = await server.inject({
-      method: 'PATCH',
-      url: `/users/${managerUser.json().id}/role`,
-      cookies: { session: managerCookie },
-      payload: { role: 'manager' },
-    });
+    await promoteToManager('e2e-resource-manager@example.com');
     expect(roleResponse.statusCode).toBe(200);
 
     const brand = await server.inject({
