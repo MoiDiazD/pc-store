@@ -7,7 +7,6 @@ import {
   pgTable,
   text,
   varchar,
-  timestamp
 } from 'drizzle-orm/pg-core';
 import { brands } from './brands.schema';
 import { timestamps } from './common.schema';
