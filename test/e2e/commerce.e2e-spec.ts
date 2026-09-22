@@ -32,7 +32,7 @@ describe('Commerce E2E', () => {
       'e2e-cart-manager@example.com',
       'Cart Manager',
     );
-    await promoteToManager('e2e-resource-manager@example.com');
+    await promoteToManager('e2e-cart-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
@@ -123,7 +123,7 @@ describe('Commerce E2E', () => {
       'e2e-checkout-manager@example.com',
       'Checkout Manager',
     );
-    await promoteToManager('e2e-resource-manager@example.com');
+    await promoteToManager('e2e-checkout-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
@@ -212,7 +212,7 @@ describe('Commerce E2E', () => {
       'e2e-order-manager@example.com',
       'Order Manager',
     );
-    await promoteToManager('e2e-resource-manager@example.com');
+    await promoteToManager('e2e-order-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
