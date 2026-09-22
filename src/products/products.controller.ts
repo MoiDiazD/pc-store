@@ -8,9 +8,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { AuthGuard } from '../auth/auth.guard';
 import { Roles } from '../auth/roles.decorator';
-import { RoleGuard } from '../auth/roles.guard';
 import { Public } from '../common/decorators/public.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -18,9 +16,7 @@ import { ProductsService } from './products.service';
 
 @Controller('products')
 export class ProductsController {
-  constructor(
-    private readonly productsService: ProductsService,
-  ) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   @Public()
   @Get(':id')
@@ -42,10 +38,7 @@ export class ProductsController {
 
   @Roles('worker', 'manager')
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() product: UpdateProductDto,
-  ) {
+  update(@Param('id') id: string, @Body() product: UpdateProductDto) {
     return this.productsService.update(Number(id), product);
   }
 
