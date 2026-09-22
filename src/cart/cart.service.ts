@@ -129,6 +129,7 @@ export class CartService {
         await this.cartItemsRepository.findByCartAndProduct(
           cart.id,
           dto.productId,
+          tx,
         );
 
       if (existingItem) {
@@ -144,6 +145,7 @@ export class CartService {
         return this.cartItemsRepository.updateQuantity(
           existingItem.id,
           newQuantity,
+          tx,
         );
       }
 
@@ -151,7 +153,7 @@ export class CartService {
         cartId: cart.id,
         productId: dto.productId,
         quantity: dto.quantity,
-      });
+      }, tx);
     });
   }
 
