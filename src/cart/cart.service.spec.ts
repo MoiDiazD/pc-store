@@ -85,7 +85,6 @@ describe('CartService', () => {
       expect(cartRepository.findByUserId).toHaveBeenCalledOnce();
       expect(cartRepository.findByUserId).toHaveBeenCalledWith(10);
       expect(cartRepository.create).not.toHaveBeenCalled();
-
       expect(
         cartItemsRepository.findDetailedByCartId,
       ).toHaveBeenCalledOnce();
@@ -169,12 +168,8 @@ describe('CartService', () => {
       const result = await service.addItem(10, dto);
 
       expect(result).toEqual(createdItem);
-
       expect(db.transaction).toHaveBeenCalledOnce();
-      expect(cartRepository.findByUserId).toHaveBeenCalledWith(
-        10,
-        tx,
-      );
+      expect(cartRepository.findByUserId).toHaveBeenCalledWith(10, tx);
       expect(productsRepository.findById).toHaveBeenCalledWith(
         dto.productId,
         tx,
@@ -467,17 +462,12 @@ describe('CartService', () => {
 
       cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       productsRepository.findById.mockResolvedValue(product);
-      cartItemsRepository.findByCartAndProduct.mockResolvedValue(
-        item,
-      );
-      cartItemsRepository.updateQuantity.mockResolvedValue(
-        updatedItem,
-      );
+      cartItemsRepository.findByCartAndProduct.mockResolvedValue(item);
+      cartItemsRepository.updateQuantity.mockResolvedValue(updatedItem);
 
       const result = await service.updateItem(10, 5, dto);
 
       expect(result).toEqual(updatedItem);
-
       expect(
         cartRepository.findByUserIdForUpdate,
       ).toHaveBeenCalledWith(10, tx);
@@ -491,15 +481,11 @@ describe('CartService', () => {
     });
 
     it('should throw NotFoundException when the cart does not exist', async () => {
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        null,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(null);
 
       await expect(
         service.updateItem(10, 5, { quantity: 2 }),
-      ).rejects.toThrow(
-        new NotFoundException('Cart not found.'),
-      );
+      ).rejects.toThrow(new NotFoundException('Cart not found.'));
 
       expect(productsRepository.findById).not.toHaveBeenCalled();
       expect(
@@ -537,9 +523,7 @@ describe('CartService', () => {
         checkoutLockedAt: null,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       productsRepository.findById.mockResolvedValue(null);
 
       await expect(
@@ -567,9 +551,7 @@ describe('CartService', () => {
         stock: 3,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       productsRepository.findById.mockResolvedValue(product);
 
       await expect(
@@ -600,13 +582,9 @@ describe('CartService', () => {
         stock: 10,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       productsRepository.findById.mockResolvedValue(product);
-      cartItemsRepository.findByCartAndProduct.mockResolvedValue(
-        null,
-      );
+      cartItemsRepository.findByCartAndProduct.mockResolvedValue(null);
 
       await expect(
         service.updateItem(10, 5, { quantity: 2 }),
@@ -629,16 +607,17 @@ describe('CartService', () => {
         checkoutLockedAt: null,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       productsRepository.findById.mockRejectedValue(error);
 
       await expect(
         service.updateItem(10, 5, { quantity: 2 }),
       ).rejects.toThrow(error);
 
-      expect(productsRepository.findById).toHaveBeenCalledWith(5);
+      expect(productsRepository.findById).toHaveBeenCalledWith(
+        5,
+        tx,
+      );
     });
   });
 
@@ -650,14 +629,10 @@ describe('CartService', () => {
         checkoutLockedAt: null,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       cartItemsRepository.remove.mockResolvedValue(true);
 
-      await expect(
-        service.removeItem(10, 5),
-      ).resolves.toBeUndefined();
+      await expect(service.removeItem(10, 5)).resolves.toBeUndefined();
 
       expect(
         cartRepository.findByUserIdForUpdate,
@@ -666,19 +641,16 @@ describe('CartService', () => {
       expect(cartItemsRepository.remove).toHaveBeenCalledWith(
         cart.id,
         5,
+        tx,
       );
     });
 
     it('should throw NotFoundException when the cart does not exist', async () => {
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        null,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(null);
 
       await expect(
         service.removeItem(10, 5),
-      ).rejects.toThrow(
-        new NotFoundException('Cart not found.'),
-      );
+      ).rejects.toThrow(new NotFoundException('Cart not found.'));
 
       expect(cartItemsRepository.remove).not.toHaveBeenCalled();
     });
@@ -710,9 +682,7 @@ describe('CartService', () => {
         checkoutLockedAt: null,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       cartItemsRepository.remove.mockResolvedValue(false);
 
       await expect(
@@ -726,6 +696,7 @@ describe('CartService', () => {
       expect(cartItemsRepository.remove).toHaveBeenCalledWith(
         cart.id,
         5,
+        tx,
       );
     });
 
@@ -737,9 +708,7 @@ describe('CartService', () => {
         checkoutLockedAt: null,
       };
 
-      cartRepository.findByUserIdForUpdate.mockResolvedValue(
-        cart,
-      );
+      cartRepository.findByUserIdForUpdate.mockResolvedValue(cart);
       cartItemsRepository.remove.mockRejectedValue(error);
 
       await expect(
@@ -749,6 +718,7 @@ describe('CartService', () => {
       expect(cartItemsRepository.remove).toHaveBeenCalledWith(
         cart.id,
         5,
+        tx,
       );
     });
   });
