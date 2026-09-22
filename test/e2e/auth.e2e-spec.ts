@@ -56,6 +56,35 @@ describe('Auth E2E', () => {
     expect(response.json()).not.toHaveProperty('passwordHash');
   });
 
+  it('validates DTOs and strips unknown properties', async () => {
+    const invalid = await app.getHttpAdapter().getInstance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        name: 'A',
+        email: 'not-an-email',
+        password: 'short',
+        unexpected: 'removed',
+      },
+    });
+
+    expect(invalid.statusCode).toBe(400);
+
+    const valid = await app.getHttpAdapter().getInstance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        name: 'Validation User',
+        email: 'validation@example.com',
+        password: 'password123',
+        unexpected: 'removed',
+      },
+    });
+
+    expect(valid.statusCode).toBe(201);
+    expect(valid.json()).not.toHaveProperty('unexpected');
+  });
+
   it('logs in, uses the session cookie, and accesses the authenticated user', async () => {
     await app.getHttpAdapter().getInstance().inject({
       method: 'POST',
