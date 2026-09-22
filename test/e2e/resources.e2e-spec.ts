@@ -67,7 +67,6 @@ describe('Resources E2E', () => {
     );
 
     await promoteToManager('e2e-resource-manager@example.com');
-    expect(roleResponse.statusCode).toBe(200);
 
     const brand = await server.inject({
       method: 'POST',
@@ -113,19 +112,7 @@ describe('Resources E2E', () => {
       'Product Manager',
     );
 
-    const manager = await server.inject({
-      method: 'GET',
-      url: '/users/me',
-      cookies: { session: managerCookie },
-    });
-
-    const promoted = await server.inject({
-      method: 'PATCH',
-      url: `/users/${manager.json().id}/role`,
-      cookies: { session: managerCookie },
-      payload: { role: 'manager' },
-    });
-    expect(promoted.statusCode).toBe(200);
+    await promoteToManager('e2e-product-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
