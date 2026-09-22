@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 export type E2eApp = NestFastifyApplication;
 
 const fakeStripeProvider = {
-  async createPayment(params: { amount: number; currency: string; metadata: Record<string, string> }) {
+  createPayment(params: { amount: number; currency: string; metadata: Record<string, string> }) {
     return {
       providerPaymentId: `e2e-payment-${params.metadata.orderId}`,
       clientSecret: `e2e-client-secret-${params.metadata.orderId}`,
@@ -21,8 +21,8 @@ const fakeStripeProvider = {
   constructWebhookEvent() {
     throw new Error('Webhook signing is not used by these E2E tests.');
   },
-  async cancelPayment() {
-    return {} as never;
+  cancelPayment() {
+    return {};
   },
 };
 
