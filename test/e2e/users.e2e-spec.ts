@@ -41,7 +41,7 @@ describe('Users E2E', () => {
       cookies: { session: cookie },
       payload: {
         name: 'Updated Name',
-        email: 'UPDATED@EXAMPLE.COM',
+        email: 'updated@example.com',
       },
     });
 
