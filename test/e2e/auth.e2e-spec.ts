@@ -85,10 +85,12 @@ describe('Auth E2E', () => {
       role: 'customer',
     });
 
-    const cookies = loginResponse.headers['set-cookie'];
+    const sessionCookie = loginResponse.cookies.find(
+      ({ name }) => name === 'session',
+    );
 
-    expect(cookies).toBeDefined();
-    expect(cookies.join(';')).toContain('session=');
+    expect(sessionCookie).toBeDefined();
+    expect(sessionCookie?.value).toBeTruthy();
 
     const meResponse = await app
       .getHttpAdapter()
@@ -96,8 +98,8 @@ describe('Auth E2E', () => {
       .inject({
         method: 'GET',
         url: '/auth/me',
-        headers: {
-          cookie: cookies.join('; '),
+        cookies: {
+          session: sessionCookie!.value,
         },
       });
 
@@ -144,7 +146,12 @@ describe('Auth E2E', () => {
         },
       });
 
-    const cookies = loginResponse.headers['set-cookie'];
+    const sessionCookie = loginResponse.cookies.find(
+      ({ name }) => name === 'session',
+    );
+
+    expect(sessionCookie).toBeDefined();
+    expect(sessionCookie?.value).toBeTruthy();
 
     const logoutResponse = await app
       .getHttpAdapter()
@@ -152,8 +159,8 @@ describe('Auth E2E', () => {
       .inject({
         method: 'POST',
         url: '/auth/logout',
-        headers: {
-          cookie: cookies.join('; '),
+        cookies: {
+          session: sessionCookie!.value,
         },
       });
 
@@ -165,8 +172,8 @@ describe('Auth E2E', () => {
       .inject({
         method: 'GET',
         url: '/auth/me',
-        headers: {
-          cookie: cookies.join('; '),
+        cookies: {
+          session: sessionCookie!.value,
         },
       });
 
