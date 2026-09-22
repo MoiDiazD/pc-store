@@ -144,7 +144,7 @@ export class CartService {
         throw new NotFoundException('Cart not found.');
       }
 
-      const product = await this.productsRepository.findById(productId);
+      const product = await this.productsRepository.findById(productId, tx);
 
       if (!product) {
         throw new NotFoundException(
@@ -161,6 +161,7 @@ export class CartService {
       const item = await this.cartItemsRepository.findByCartAndProduct(
         cart.id,
         productId,
+        tx,
       );
 
       if (!item) {
@@ -172,6 +173,7 @@ export class CartService {
       return this.cartItemsRepository.updateQuantity(
         item.id,
         dto.quantity,
+        tx,
       );
     });
   }
@@ -190,6 +192,7 @@ export class CartService {
       const removed = await this.cartItemsRepository.remove(
         cart.id,
         productId,
+        tx,
       );
 
       if (!removed) {
