@@ -1,20 +1,21 @@
 import {
-    BadRequestException,
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 
+import { DATABASE } from '../database/database.provider';
+import type {
+  Database,
+  DatabaseTransaction,
+} from '../database/database.provider';
 import { ProductsRepository } from '../products/products.repository';
-
-import { CartItemsRepository } from './cart-items.repository';
-import { CartRepository } from './cart.repository';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import { DATABASE } from '../database/database.provider';
-import type { Database, DatabaseTransaction } from '../database/database.provider';
-import { text } from 'drizzle-orm/gel-core';
+import { CartItemsRepository } from './cart-items.repository';
+import { CartRepository } from './cart.repository';
 
 @Injectable()
 export class CartService {
@@ -50,11 +51,7 @@ export class CartService {
     userId: number,
     tx: DatabaseTransaction,
   ) {
-    const cart =
-      await this.cartRepository.findByUserId(
-        userId,
-        tx,
-      );
+    const cart = await this.cartRepository.findByUserId(userId, tx);
 
     if (!cart) {
       throw new NotFoundException('Cart not found.');
@@ -73,11 +70,10 @@ export class CartService {
     userId: number,
     tx: DatabaseTransaction,
   ) {
-    const cart =
-      await this.cartRepository.findByUserIdForUpdate(
-        userId,
-        tx,
-      );
+    const cart = await this.cartRepository.findByUserIdForUpdate(
+      userId,
+      tx,
+    );
 
     if (!cart) {
       throw new NotFoundException('Cart not found.');
@@ -92,15 +88,9 @@ export class CartService {
     return cart;
   }
 
-  async addItem(
-    userId: number,
-    dto: AddCartItemDto,
-  ) {
+  async addItem(userId: number, dto: AddCartItemDto) {
     return this.db.transaction(async (tx) => {
-      let cart = await this.cartRepository.findByUserId(
-        userId,
-        tx,
-      );
+      let cart = await this.cartRepository.findByUserId(userId, tx);
 
       if (!cart) {
         cart = await this.cartRepository.create(userId, tx);
@@ -110,8 +100,10 @@ export class CartService {
         );
       }
 
-      const product =
-        await this.productsRepository.findById(dto.productId, tx);
+      const product = await this.productsRepository.findById(
+        dto.productId,
+        tx,
+      );
 
       if (!product) {
         throw new NotFoundException(
@@ -133,8 +125,7 @@ export class CartService {
         );
 
       if (existingItem) {
-        const newQuantity =
-          existingItem.quantity + dto.quantity;
+        const newQuantity = existingItem.quantity + dto.quantity;
 
         if (newQuantity > product.stock) {
           throw new BadRequestException(
@@ -149,11 +140,14 @@ export class CartService {
         );
       }
 
-      return this.cartItemsRepository.create({
-        cartId: cart.id,
-        productId: dto.productId,
-        quantity: dto.quantity,
-      }, tx);
+      return this.cartItemsRepository.create(
+        {
+          cartId: cart.id,
+          productId: dto.productId,
+          quantity: dto.quantity,
+        },
+        tx,
+      );
     });
   }
 
@@ -163,19 +157,13 @@ export class CartService {
     dto: UpdateCartItemDto,
   ) {
     return this.db.transaction(async (tx) => {
-      const cart =
-        await this.getUnlockedCartForUpdate(
-          userId,
-          tx,
-        );
+      const cart = await this.getUnlockedCartForUpdate(userId, tx);
+
       if (!cart) {
-        throw new NotFoundException(
-          'Cart not found.',
-        );
+        throw new NotFoundException('Cart not found.');
       }
 
-      const product =
-        await this.productsRepository.findById(productId);
+      const product = await this.productsRepository.findById(productId);
 
       if (!product) {
         throw new NotFoundException(
@@ -189,11 +177,10 @@ export class CartService {
         );
       }
 
-      const item =
-        await this.cartItemsRepository.findByCartAndProduct(
-          cart.id,
-          productId,
-        );
+      const item = await this.cartItemsRepository.findByCartAndProduct(
+        cart.id,
+        productId,
+      );
 
       if (!item) {
         throw new NotFoundException(
@@ -213,22 +200,16 @@ export class CartService {
     productId: number,
   ): Promise<void> {
     return this.db.transaction(async (tx) => {
-      const cart =
-        await this.getUnlockedCartForUpdate(
-          userId,
-          tx,
-        );
+      const cart = await this.getUnlockedCartForUpdate(userId, tx);
+
       if (!cart) {
-        throw new NotFoundException(
-          'Cart not found.',
-        );
+        throw new NotFoundException('Cart not found.');
       }
 
-      const removed =
-        await this.cartItemsRepository.remove(
-          cart.id,
-          productId,
-        );
+      const removed = await this.cartItemsRepository.remove(
+        cart.id,
+        productId,
+      );
 
       if (!removed) {
         throw new NotFoundException(
