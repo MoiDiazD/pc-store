@@ -97,12 +97,17 @@ export class CartService {
     dto: AddCartItemDto,
   ) {
     return this.db.transaction(async (tx) => {
-      let cart = await this.getUnlockedCart(
+      let cart = await this.cartRepository.findByUserId(
         userId,
         tx,
       );
+
       if (!cart) {
-        cart = await this.cartRepository.create(userId);
+        cart = await this.cartRepository.create(userId, tx);
+      } else if (cart.checkoutLockedAt) {
+        throw new ConflictException(
+          'Cart is locked by a pending checkout.',
+        );
       }
 
       const product =
