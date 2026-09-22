@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { FastifyInstance } from 'fastify';
 import { createE2eApp, promoteToManager, registerAndLogin } from './helpers/app';
 
 describe('Commerce E2E', () => {
   let app: Awaited<ReturnType<typeof createE2eApp>>;
-  let server: ReturnType<typeof app.getHttpAdapter>['getInstance'];
+  let server: FastifyInstance;
 
   beforeAll(async () => {
     app = await createE2eApp();
