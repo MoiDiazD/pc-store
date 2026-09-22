@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import cookie from '@fastify/cookie';
-import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { AppModule } from '../../src/app.module';
@@ -29,6 +28,7 @@ describe('Auth E2E', () => {
     );
     app.useGlobalFilters(new PostgresExceptionFilter());
     await app.init();
+    await app.getHttpAdapter().getInstance().ready();
   });
 
   afterAll(async () => {
@@ -36,43 +36,51 @@ describe('Auth E2E', () => {
   });
 
   it('registers a customer through the real HTTP stack', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
+    const response = await app.getHttpAdapter().getInstance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
         name: 'E2E User',
         email: 'e2e-register@example.com',
         password: 'password123',
-      })
-      .expect(201);
+      },
+    });
 
-    expect(response.body).toMatchObject({
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({
       name: 'E2E User',
       email: 'e2e-register@example.com',
       role: 'customer',
     });
-    expect(response.body).not.toHaveProperty('password');
-    expect(response.body).not.toHaveProperty('passwordHash');
+    expect(response.json()).not.toHaveProperty('password');
+    expect(response.json()).not.toHaveProperty('passwordHash');
   });
 
   it('logs in, uses the session cookie, and accesses the authenticated user', async () => {
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
+    await app.getHttpAdapter().getInstance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
         name: 'E2E Login User',
         email: 'e2e-login@example.com',
         password: 'password123',
-      })
-      .expect(201);
+      },
+    });
 
-    const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'E2E-LOGIN@EXAMPLE.COM',
-        password: 'password123',
-      })
-      .expect(201);
+    const loginResponse = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: {
+          email: 'E2E-LOGIN@EXAMPLE.COM',
+          password: 'password123',
+        },
+      });
 
-    expect(loginResponse.body).toMatchObject({
+    expect(loginResponse.statusCode).toBe(201);
+    expect(loginResponse.json()).toMatchObject({
       email: 'e2e-login@example.com',
       role: 'customer',
     });
@@ -82,53 +90,86 @@ describe('Auth E2E', () => {
     expect(cookies).toBeDefined();
     expect(cookies.join(';')).toContain('session=');
 
-    await request(app.getHttpServer())
-      .get('/auth/me')
-      .set('Cookie', cookies)
-      .expect(200)
-      .expect(({ body }) => {
-        expect(body).toMatchObject({
-          name: 'E2E Login User',
-          email: 'e2e-login@example.com',
-          role: 'customer',
-        });
+    const meResponse = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'GET',
+        url: '/auth/me',
+        headers: {
+          cookie: cookies.join('; '),
+        },
       });
+
+    expect(meResponse.statusCode).toBe(200);
+    expect(meResponse.json()).toMatchObject({
+      name: 'E2E Login User',
+      email: 'e2e-login@example.com',
+      role: 'customer',
+    });
   });
 
   it('rejects protected requests without authentication', async () => {
-    await request(app.getHttpServer())
-      .get('/auth/me')
-      .expect(401);
+    const response = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'GET',
+        url: '/auth/me',
+      });
+
+    expect(response.statusCode).toBe(401);
   });
 
   it('revokes the session on logout', async () => {
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
+    await app.getHttpAdapter().getInstance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
         name: 'E2E Logout User',
         email: 'e2e-logout@example.com',
         password: 'password123',
-      })
-      .expect(201);
+      },
+    });
 
-    const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'e2e-logout@example.com',
-        password: 'password123',
-      })
-      .expect(201);
+    const loginResponse = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: {
+          email: 'e2e-logout@example.com',
+          password: 'password123',
+        },
+      });
 
     const cookies = loginResponse.headers['set-cookie'];
 
-    await request(app.getHttpServer())
-      .post('/auth/logout')
-      .set('Cookie', cookies)
-      .expect(201);
+    const logoutResponse = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'POST',
+        url: '/auth/logout',
+        headers: {
+          cookie: cookies.join('; '),
+        },
+      });
 
-    await request(app.getHttpServer())
-      .get('/auth/me')
-      .set('Cookie', cookies)
-      .expect(401);
+    expect(logoutResponse.statusCode).toBe(201);
+
+    const meResponse = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'GET',
+        url: '/auth/me',
+        headers: {
+          cookie: cookies.join('; '),
+        },
+      });
+
+    expect(meResponse.statusCode).toBe(401);
   });
 });
