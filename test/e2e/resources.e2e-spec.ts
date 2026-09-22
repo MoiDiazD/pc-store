@@ -83,6 +83,87 @@ describe('Resources E2E', () => {
       payload: { name: 'E2E Category' },
     });
     expect(category.statusCode).toBe(201);
+
+    const updatedBrand = await server.inject({
+      method: 'PATCH',
+      url: `/brands/${brand.json().id}`,
+      cookies: { session: managerCookie },
+      payload: { name: 'E2E Brand Updated' },
+    });
+    expect(updatedBrand.statusCode).toBe(200);
+    expect(updatedBrand.json().name).toBe('E2E Brand Updated');
+
+    const updatedCategory = await server.inject({
+      method: 'PATCH',
+      url: `/categories/${category.json().id}`,
+      cookies: { session: managerCookie },
+      payload: { name: 'E2E Category Updated' },
+    });
+    expect(updatedCategory.statusCode).toBe(200);
+    expect(updatedCategory.json().name).toBe('E2E Category Updated');
+
+    const product = await server.inject({
+      method: 'POST',
+      url: '/products',
+      cookies: { session: managerCookie },
+      payload: {
+        name: 'E2E Relation Product',
+        model: 'RELATION-1',
+        price: '20.00',
+        stock: 2,
+        brandId: brand.json().id,
+      },
+    });
+    expect(product.statusCode).toBe(201);
+
+    const addedProduct = await server.inject({
+      method: 'POST',
+      url: `/categories/${category.json().id}/products/${product.json().id}`,
+      cookies: { session: managerCookie },
+    });
+    expect(addedProduct.statusCode).toBe(201);
+
+    const categoryProducts = await server.inject({
+      method: 'GET',
+      url: `/categories/${category.json().id}/products`,
+    });
+    expect(categoryProducts.statusCode).toBe(200);
+    expect(categoryProducts.json()).toHaveLength(1);
+
+    const removedProduct = await server.inject({
+      method: 'DELETE',
+      url: `/categories/${category.json().id}/products/${product.json().id}`,
+      cookies: { session: managerCookie },
+    });
+    expect(removedProduct.statusCode).toBe(200);
+
+    const deletedCategory = await server.inject({
+      method: 'DELETE',
+      url: `/categories/${category.json().id}`,
+      cookies: { session: managerCookie },
+    });
+    expect(deletedCategory.statusCode).toBe(200);
+
+    const restoredCategory = await server.inject({
+      method: 'PATCH',
+      url: `/categories/${category.json().id}/restore`,
+      cookies: { session: managerCookie },
+    });
+    expect(restoredCategory.statusCode).toBe(200);
+
+    const deletedBrand = await server.inject({
+      method: 'DELETE',
+      url: `/brands/${brand.json().id}`,
+      cookies: { session: managerCookie },
+    });
+    expect(deletedBrand.statusCode).toBe(200);
+
+    const restoredBrand = await server.inject({
+      method: 'PATCH',
+      url: `/brands/${brand.json().id}/restore`,
+      cookies: { session: managerCookie },
+    });
+    expect(restoredBrand.statusCode).toBe(200);
   });
 
   it('enforces product roles and exposes the created product publicly', async () => {
