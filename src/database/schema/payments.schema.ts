@@ -9,7 +9,6 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { orders } from './orders.schema';
-import { timestamps } from './common.schema';
 
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
@@ -21,48 +20,18 @@ export const paymentStatusEnum = pgEnum('payment_status', [
 export const payments = pgTable(
   'payments',
   {
-    id: integer('id')
-      .generatedAlwaysAsIdentity()
-      .primaryKey(),
-
-    orderId: integer('order_id')
-      .notNull()
-      .references(() => orders.id, {
-        onDelete: 'no action',
-      }),
-
-    provider: varchar('provider', {
-      length: 50,
-    }).notNull(),
-
-    providerPaymentId: varchar('provider_payment_id', {
-      length: 255,
-    }).notNull(),
-
-    status: paymentStatusEnum('status')
-      .notNull()
-      .default('pending'),
-
+    id: integer('id').generatedAlwaysAsIdentity().primaryKey(),
+    orderId: integer('order_id').notNull().references(() => orders.id, { onDelete: 'no action' }),
+    provider: varchar('provider', { length: 50 }).notNull(),
+    providerPaymentId: varchar('provider_payment_id', { length: 255 }).notNull(),
+    status: paymentStatusEnum('status').notNull().default('pending'),
     amount: integer('amount').notNull(),
-
-    currency: varchar('currency', {
-      length: 3,
-    }).notNull(),
-
-    createdAt: timestamp('created_at', {
-      withTimezone: true,
-    }).defaultNow().notNull(),
-
-    updatedAt: timestamp('updated_at', {
-      withTimezone: true,
-    }).defaultNow().notNull(),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index('payments_order_id_idx').on(table.orderId),
-
-    unique('payments_provider_payment_id_unique').on(
-      table.provider,
-      table.providerPaymentId,
-    ),
+    unique('payments_provider_payment_id_unique').on(table.provider, table.providerPaymentId),
   ],
 );
