@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createE2eApp, promoteToManager, registerAndLogin } from './helpers/app';
+import { db } from '../helpers/database';
+import { users } from '../../src/database/schema';
+import { eq } from 'drizzle-orm';
 
 describe('Resources E2E', () => {
   let app: Awaited<ReturnType<typeof createE2eApp>>;
@@ -101,6 +104,29 @@ describe('Resources E2E', () => {
     });
     expect(updatedCategory.statusCode).toBe(200);
     expect(updatedCategory.json().name).toBe('E2E Category Updated');
+
+    const workerCookie = await registerAndLogin(
+      app,
+      'e2e-product-worker@example.com',
+      'Product Worker',
+    );
+    await db.update(users).set({ role: 'worker' }).where(
+      eq(users.email, 'e2e-product-worker@example.com'),
+    );
+
+    const workerProduct = await server.inject({
+      method: 'POST',
+      url: '/products',
+      cookies: { session: workerCookie },
+      payload: {
+        name: 'E2E Worker Product',
+        model: 'WORKER-1',
+        price: '100.00',
+        stock: 3,
+        brandId: 1,
+      },
+    });
+    expect(workerProduct.statusCode).toBe(201);
 
     const product = await server.inject({
       method: 'POST',
