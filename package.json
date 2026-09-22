@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
-    "test:integration": "DATABASE_URL=postgresql://pcstore:pcstore_dev@localhost:5432/pcstore_test vitest run test/integration",
+    "test:integration": "vitest run --config test/vitest.integration.config.ts",
     "test:e2e": "vitest run --config test/vitest.e2e.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
