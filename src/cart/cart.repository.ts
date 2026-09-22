@@ -43,8 +43,11 @@ export class CartRepository {
     return cart;
   }
 
-  async create(userId: number): Promise<Cart> {
-    const [cart] = await this.db
+  async create(
+    userId: number,
+    executor: DbExecutor = this.db,
+  ): Promise<Cart> {
+    const [cart] = await executor
       .insert(carts)
       .values({
         userId,
