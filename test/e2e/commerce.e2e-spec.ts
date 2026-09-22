@@ -147,12 +147,19 @@ describe('Commerce E2E', () => {
       },
     });
 
+    if (product.statusCode !== 201) {
+      throw new Error(`Product creation failed: ${product.statusCode} ${product.body}`);
+    }
+
     const addedToCheckoutCart = await server.inject({
       method: 'POST',
       url: '/cart/items',
       cookies: { session: customer },
       payload: { productId: product.json().id, quantity: 2 },
     });
+    if (addedToCheckoutCart.statusCode !== 201) {
+      throw new Error(`Add to cart failed: ${addedToCheckoutCart.statusCode} ${addedToCheckoutCart.body}; product=${product.body}`);
+    }
     expect(addedToCheckoutCart.statusCode).toBe(201);
 
     const checkoutCart = await server.inject({
@@ -252,12 +259,19 @@ describe('Commerce E2E', () => {
       },
     });
 
+    if (product.statusCode !== 201) {
+      throw new Error(`Product creation failed: ${product.statusCode} ${product.body}`);
+    }
+
     const addedToFirstUserCart = await server.inject({
       method: 'POST',
       url: '/cart/items',
       cookies: { session: firstUser },
       payload: { productId: product.json().id, quantity: 1 },
     });
+    if (addedToFirstUserCart.statusCode !== 201) {
+      throw new Error(`Add to cart failed: ${addedToFirstUserCart.statusCode} ${addedToFirstUserCart.body}; product=${product.body}`);
+    }
     expect(addedToFirstUserCart.statusCode).toBe(201);
 
     const checkout = await server.inject({
