@@ -66,7 +66,7 @@ describe('PaymentService', () => {
       );
     });
 
-    it('should propagate errors thrown by the provider factory', async () => {
+    it('should propagate errors thrown by the provider factory', () => {
       const error = new Error('Unsupported payment provider');
 
       paymentProviderFactory.get.mockImplementation(() => {
