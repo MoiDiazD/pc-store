@@ -8,14 +8,13 @@ export class PaymentService {
     private readonly paymentProviderFactory: PaymentProviderFactory,
   ) {}
 
-  async constructWebhookEvent(
+  constructWebhookEvent(
     provider: string,
     payload: Buffer,
     signature: string,
     webhookSecret: string,
   ) {
-    const paymentProvider =
-      this.paymentProviderFactory.get(provider);
+    const paymentProvider = this.paymentProviderFactory.get(provider);
 
     return paymentProvider.constructWebhookEvent(
       payload,
@@ -30,13 +29,8 @@ export class PaymentService {
     currency: string,
     metadata: Record<string, string>,
   ) {
-    const paymentProvider =
-      this.paymentProviderFactory.get(provider);
+    const paymentProvider = this.paymentProviderFactory.get(provider);
 
-    return paymentProvider.createPayment({
-      amount,
-      currency,
-      metadata,
-    });
+    return paymentProvider.createPayment({ amount, currency, metadata });
   }
 }
