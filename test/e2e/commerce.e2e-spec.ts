@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createE2eApp, registerAndLogin } from './helpers/app';
+import { createE2eApp, promoteToManager, registerAndLogin } from './helpers/app';
 
 describe('Commerce E2E', () => {
   let app: Awaited<ReturnType<typeof createE2eApp>>;
@@ -32,17 +32,7 @@ describe('Commerce E2E', () => {
       'e2e-cart-manager@example.com',
       'Cart Manager',
     );
-    const managerUser = await server.inject({
-      method: 'GET',
-      url: '/users/me',
-      cookies: { session: manager },
-    });
-    await server.inject({
-      method: 'PATCH',
-      url: `/users/${managerUser.json().id}/role`,
-      cookies: { session: manager },
-      payload: { role: 'manager' },
-    });
+    await promoteToManager('e2e-resource-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
@@ -133,17 +123,7 @@ describe('Commerce E2E', () => {
       'e2e-checkout-manager@example.com',
       'Checkout Manager',
     );
-    const managerUser = await server.inject({
-      method: 'GET',
-      url: '/users/me',
-      cookies: { session: manager },
-    });
-    await server.inject({
-      method: 'PATCH',
-      url: `/users/${managerUser.json().id}/role`,
-      cookies: { session: manager },
-      payload: { role: 'manager' },
-    });
+    await promoteToManager('e2e-resource-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
@@ -232,17 +212,7 @@ describe('Commerce E2E', () => {
       'e2e-order-manager@example.com',
       'Order Manager',
     );
-    const managerUser = await server.inject({
-      method: 'GET',
-      url: '/users/me',
-      cookies: { session: manager },
-    });
-    await server.inject({
-      method: 'PATCH',
-      url: `/users/${managerUser.json().id}/role`,
-      cookies: { session: manager },
-      payload: { role: 'manager' },
-    });
+    await promoteToManager('e2e-resource-manager@example.com');
 
     const brand = await server.inject({
       method: 'POST',
