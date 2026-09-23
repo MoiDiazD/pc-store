@@ -1,98 +1,272 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# pc-store
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend de una aplicación e-commerce desarrollada con **NestJS, TypeScript, Fastify, PostgreSQL y Drizzle ORM**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+El proyecto incluye autenticación mediante sesiones, gestión de catálogo, carrito de compra, checkout, pedidos, gestión de usuarios por roles e integración con Stripe.
 
-## Description
+## Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Node.js / TypeScript**
+- **NestJS 11**
+- **Fastify**
+- **PostgreSQL 17**
+- **Drizzle ORM**
+- **Argon2id** para el hash de contraseñas
+- **Sesiones mediante cookies HTTP-only**
+- **Stripe PaymentIntents + Webhooks**
+- **Vitest** para tests unitarios, integración y E2E
+- **Docker / Docker Compose**
 
-## Project setup
+El frontend se encuentra en un repositorio independiente: \`pc-store-frontend\`.
 
-```bash
-$ npm install
-```
+## Arquitectura
 
-## Compile and run the project
+La aplicación está organizada por módulos siguiendo la arquitectura de NestJS:
 
-```bash
-# development
-$ npm run start
+\`\`\`
+src/
+├── auth/
+├── users/
+├── products/
+├── brands/
+├── categories/
+├── cart/
+├── orders/
+├── payments/
+└── database/
+\`\`\`
 
-# watch mode
-$ npm run start:dev
+La lógica de negocio se mantiene principalmente en los servicios, mientras que los repositorios encapsulan el acceso a PostgreSQL mediante Drizzle ORM.
 
-# production mode
-$ npm run start:prod
-```
+## Autenticación y autorización
 
-## Run tests
+La autenticación utiliza sesiones persistidas en PostgreSQL.
 
-```bash
-# unit tests
-$ npm run test
+- Las contraseñas se almacenan utilizando **Argon2id**.
+- La sesión se mantiene mediante una cookie HTTP-only.
+- Las sesiones tienen fecha de expiración y pueden ser revocadas.
+- El cambio de contraseña revoca las sesiones existentes.
+- Las operaciones administrativas están protegidas mediante roles.
 
-# e2e tests
-$ npm run test:e2e
+### Roles
 
-# test coverage
-$ npm run test:cov
-```
+| Rol | Descripción |
+|---|---|
+| \`customer\` | Usuario normal que puede gestionar su cuenta, carrito y pedidos. |
+| \`worker\` | Puede realizar determinadas operaciones sobre el catálogo. |
+| \`manager\` | Puede realizar operaciones administrativas y gestionar usuarios. |
 
-## Deployment
+## API
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Auth
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| POST | \`/auth/register\` | Público | Registrar un usuario |
+| POST | \`/auth/login\` | Público | Iniciar sesión |
+| POST | \`/auth/logout\` | Autenticado | Cerrar sesión |
+| GET | \`/auth/me\` | Autenticado | Obtener el usuario actual |
+| PATCH | \`/auth/change-password\` | Autenticado | Cambiar contraseña |
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+### Products
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| GET | \`/products\` | Público | Listar productos |
+| GET | \`/products/:id\` | Público | Obtener un producto |
+| POST | \`/products\` | Worker / Manager | Crear producto |
+| PATCH | \`/products/:id\` | Worker / Manager | Actualizar producto |
+| DELETE | \`/products/:id\` | Worker / Manager | Borrado lógico |
+| PATCH | \`/products/:id/restore\` | Manager | Restaurar producto |
 
-## Resources
+### Brands
 
-Check out a few resources that may come in handy when working with NestJS:
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| GET | \`/brands\` | Público | Listar marcas |
+| GET | \`/brands/:id\` | Público | Obtener una marca |
+| POST | \`/brands\` | Manager | Crear marca |
+| PATCH | \`/brands/:id\` | Manager | Actualizar marca |
+| DELETE | \`/brands/:id\` | Manager | Borrado lógico |
+| PATCH | \`/brands/:id/restore\` | Manager | Restaurar marca |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Categories
 
-## Support
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| GET | \`/categories\` | Público | Listar categorías |
+| GET | \`/categories/:id\` | Público | Obtener una categoría |
+| GET | \`/categories/:id/products\` | Público | Obtener productos de una categoría |
+| POST | \`/categories\` | Manager | Crear categoría |
+| PATCH | \`/categories/:id\` | Manager | Actualizar categoría |
+| DELETE | \`/categories/:id\` | Manager | Borrado lógico |
+| PATCH | \`/categories/:id/restore\` | Manager | Restaurar categoría |
+| POST | \`/categories/:id/products/:productId\` | Worker / Manager | Asociar producto |
+| DELETE | \`/categories/:id/products/:productId\` | Worker / Manager | Desasociar producto |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Cart
 
-## Stay in touch
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| GET | \`/cart\` | Autenticado | Obtener carrito |
+| POST | \`/cart/items\` | Autenticado | Añadir producto |
+| PATCH | \`/cart/items/:productId\` | Autenticado | Modificar cantidad |
+| DELETE | \`/cart/items/:productId\` | Autenticado | Eliminar producto |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Orders
 
-## License
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| POST | \`/orders/checkout\` | Autenticado | Crear checkout |
+| GET | \`/orders\` | Autenticado | Obtener pedidos propios |
+| GET | \`/orders/:id\` | Autenticado | Obtener un pedido propio |
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Durante el checkout el backend reserva el stock y crea un pedido en estado \`pending\`. Una vez confirmado el pago, el pedido pasa a \`confirmed\` y el carrito se limpia.
+
+Los checkouts pendientes pueden expirar y liberar el stock reservado.
+
+### Payments
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| POST | \`/payments/webhook\` | Stripe | Recibir eventos de Stripe |
+
+El webhook valida la firma de Stripe antes de procesar los eventos.
+
+El flujo de pago es:
+
+\`\`\`
+Frontend
+   │
+   ├── POST /orders/checkout
+   │
+   ▼
+Backend
+   │
+   ├── Reserva stock
+   ├── Crea Order
+   └── Crea PaymentIntent
+   │
+   ▼
+Stripe Payment Element
+   │
+   ▼
+Stripe
+   │
+   └── payment_intent.succeeded
+             │
+             ▼
+      /payments/webhook
+             │
+             ▼
+          Backend
+             │
+             ├── Payment → succeeded
+             ├── Order → confirmed
+             └── Cart → vacío
+\`\`\`
+
+### Users
+
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| GET | \`/users/me\` | Autenticado | Obtener perfil |
+| PATCH | \`/users/me\` | Autenticado | Actualizar perfil |
+| GET | \`/users/:id\` | Manager | Obtener usuario |
+| PATCH | \`/users/:id\` | Manager | Actualizar usuario |
+| DELETE | \`/users/:id\` | Manager | Borrado lógico |
+| PATCH | \`/users/:id/role\` | Manager | Cambiar rol |
+
+## Base de datos
+
+La aplicación utiliza PostgreSQL y Drizzle ORM.
+
+Entidades principales:
+
+- \`users\`
+- \`sessions\`
+- \`brands\`
+- \`categories\`
+- \`products\`
+- \`product_categories\`
+- \`carts\`
+- \`cart_items\`
+- \`orders\`
+- \`order_items\`
+- \`payments\`
+
+Se utiliza borrado lógico en las entidades que lo requieren mediante \`deletedAt\`.
+
+## Configuración
+
+Crea un archivo \`.env\` a partir de \`.env.example\` y configura las variables necesarias para PostgreSQL, sesiones y Stripe.
+
+Las claves secretas de Stripe deben permanecer exclusivamente en el backend.
+
+## Instalación
+
+### Requisitos
+
+- Node.js 24.x
+- npm
+- Docker
+- Docker Compose
+- PostgreSQL 17 mediante Docker
+
+### Ejecutar
+
+\`\`\`bash
+npm install
+docker compose up -d
+npm run db:migrate
+npm run start:dev
+\`\`\`
+
+El backend se ejecuta por defecto en:
+
+\`\`\`
+http://localhost:3000
+\`\`\`
+
+Comprobación rápida:
+
+\`\`\`bash
+curl http://localhost:3000/products
+curl http://localhost:3000/brands
+curl http://localhost:3000/categories
+\`\`\`
+
+## Tests
+
+El proyecto utiliza Vitest.
+
+\`\`\`bash
+npm run test
+npm run test:watch
+npm run test:cov
+\`\`\`
+
+También dispone de pruebas de integración contra PostgreSQL y pruebas E2E.
+
+## Estado
+
+El backend incluye actualmente:
+
+- Autenticación y sesiones
+- Autorización por roles
+- Gestión de usuarios
+- Gestión de productos
+- Gestión de marcas
+- Gestión de categorías
+- Carrito
+- Checkout
+- Gestión de stock
+- Pedidos
+- Pagos mediante Stripe
+- Webhooks de Stripe
+- Expiración de checkouts
+- Tests unitarios, de integración y E2E
+
+## Licencia
+
+Este proyecto es de carácter educativo.
