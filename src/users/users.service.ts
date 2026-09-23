@@ -55,9 +55,13 @@ export class UsersService {
   }
 
   private toPublicUser(user: User) {
-    const publicUser = { ...user };
-    delete publicUser.passwordHash;
-    delete publicUser.deletedAt;
-    return publicUser;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }
